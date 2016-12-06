@@ -24,12 +24,21 @@ class Estropadak(Resource):
             estropadak = db.view("estropadak/all", startkey=[league, yearz],
                     endkey=[league, fyearz], include_docs=True)
             result = estropadak.rows
-        except(e):
+        except:
             result = []
         return result
 
+class Estropada(Resource):
+    def get(self, estropada_id):
+        try:
+            doc = db[estropada_id]
+        except:
+            doc = {}
+        return doc
+
 api.add_resource(Years, '/years')
 api.add_resource(Estropadak, '/estropadak/<league_id>/<year>')
+api.add_resource(Estropada, '/estropada/<estropada_id>')
 
 if __name__ == '__main__':
     app.run(debug=True)
