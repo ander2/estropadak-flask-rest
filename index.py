@@ -1,8 +1,10 @@
 from flask import Flask
 from flask_restful import Resource, Api
+from flask.ext.cors import CORS
 import couchdb
 
 app = Flask(__name__)
+cors = CORS(app, resources={r"/estropada[k]?/*": {"origins": "*"}})
 api = Api(app)
 couch_server = couchdb.Server()
 db = couch_server['estropadak']
