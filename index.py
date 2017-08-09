@@ -1,5 +1,5 @@
 from flask import Flask
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api, reqparse
 from flask.ext.cors import CORS
 import couchdb
 
@@ -22,9 +22,23 @@ class Estropadak(Resource):
         yearz = "{}".format(year)
         fyear = year + "z"
         fyearz = "{}".format(fyear)
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('startdate', type=str)
+        parser.add_argument('enddate', type=str)
+        args = parser.parse_args()
+        start = [league, yearz]
+        end = [league, fyearz]
+        if 'startdate' in args:
+            start = [league, args['startdate']]
+        if 'enddate' in args:
+            end= [league, args['enddate']]
+
         try:
-            estropadak = db.view("estropadak/all", startkey=[league, yearz],
-                    endkey=[league, fyearz], include_docs=True)
+            estropadak = db.view("estropadak/all",
+                                 startkey=start,
+                                 endkey=end,
+                                 include_docs=True)
             result = estropadak.rows
         except:
             result = []
