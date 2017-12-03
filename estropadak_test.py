@@ -22,11 +22,12 @@ class EstropadakTestCase(unittest.TestCase):
     def testYears(self):
         rv = self.app.get('/years')
         years = json.loads(rv.data.decode('utf-8'))
-        self.assertCountEqual([u'act',u'arc'], years.keys())
+        self.assertCountEqual(['act', 'arc1', 'arc2', 'euskotren'], years.keys())
 
     def testEstropadakList(self):
         rv = self.app.get('/estropadak/act/2010')
         estropadak = json.loads(rv.data.decode('utf-8'))
+        print(estropadak)
         self.assertEqual(len(estropadak), 20)
 
     def testEstropadakListWithoutResults(self):
