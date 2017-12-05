@@ -3,6 +3,7 @@ import index
 import json
 import unittest
 import tempfile
+import logging
 
 class EstropadakTestCase(unittest.TestCase):
 
@@ -27,7 +28,6 @@ class EstropadakTestCase(unittest.TestCase):
     def testEstropadakList(self):
         rv = self.app.get('/estropadak/act/2010')
         estropadak = json.loads(rv.data.decode('utf-8'))
-        print(estropadak)
         self.assertEqual(len(estropadak), 20)
 
     def testEstropadakListWithoutResults(self):
@@ -49,6 +49,18 @@ class EstropadakTestCase(unittest.TestCase):
         rv = self.app.get('/estropada/fuck')
         estropada = json.loads(rv.data.decode('utf-8'))
         self.assertEqual(estropada, {} )
+
+    def testSailkapenaWithLoweCaseLeague(self):
+        rv = self.app.get('/sailkapena/act/2017')
+        logging.info(rv)
+        sailkapena = json.loads(rv.data.decode('utf-8'))
+        self.assertEqual(len(sailkapena.keys()), 12)
+
+    def testSailkapenaWithUpperCaseLeague(self):
+        rv = self.app.get('/sailkapena/ACT/2017')
+        logging.info(rv)
+        sailkapena = json.loads(rv.data.decode('utf-8'))
+        self.assertEqual(len(sailkapena.keys()), 12)
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,6 @@
 import couchdb
 import sys
+import logging
 from flask_restful import Resource, reqparse
 
 couch_server = couchdb.Server()
@@ -21,18 +22,8 @@ class Estropadak(Resource):
         fyear = year + "z"
         fyearz = "{}".format(fyear)
 
-        # parser = reqparse.RequestParser()
-        # parser.add_argument('startdate', type=str)
-        # parser.add_argument('enddate', type=str)
-        # args = parser.parse_args()
         start = [league, yearz]
         end = [league, fyearz]
-        print("{} {}".format(start, end))
-        # if 'startdate' in args:
-        #     start = [league, args['startdate']]
-        # if 'enddate' in args:
-        #     end= [league, args['enddate']]
-        print("{} {}".format(start, end))
         try:
             estropadak = db.view("estropadak/all",
                                  None,
@@ -54,3 +45,9 @@ class Estropada(Resource):
             doc = {}
         return doc
 
+class Sailkapena(Resource):
+    def get(self, league_id, year):
+        key = 'rank_{}_{}'.format(league_id.upper(), year)
+        logging.info(key)
+        doc = db[key]
+        return doc['stats']
