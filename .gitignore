@@ -1,2 +1,5 @@
 *.swp
 *.pyc
+.vscode
+.cache
+__pycache__
