@@ -46,8 +46,10 @@ class Estropada(Resource):
         return doc
 
 class Sailkapena(Resource):
-    def get(self, league_id, year):
+    def get(self, league_id, year, team=None):
         key = 'rank_{}_{}'.format(league_id.upper(), year)
         logging.info(key)
         doc = db[key]
+        if team:
+            return doc['stats'][team]
         return doc['stats']

@@ -62,5 +62,12 @@ class EstropadakTestCase(unittest.TestCase):
         sailkapena = json.loads(rv.data.decode('utf-8'))
         self.assertEqual(len(sailkapena.keys()), 12)
 
+    def testSailkapenaForTeam(self):
+        rv = self.app.get('/sailkapena/ACT/2017/Orio')
+        logging.info(rv)
+        sailkapena = json.loads(rv.data.decode('utf-8'))
+        keys = ['wins', 'positions', 'position', 'points', 'best', 'worst']
+        self.assertCountEqual(sailkapena.keys(), keys)
+
 if __name__ == '__main__':
     unittest.main()
