@@ -32,8 +32,8 @@ class Estropadak(Resource):
                                  include_docs=True,
                                  reduce=False)
             result = estropadak.rows
-        except:
-            result = []
+        except couchdb.http.ResourceNotFound:
+            return {'error': 'Estropadak not found'}, 404
         return result
 
 
@@ -48,8 +48,14 @@ class Estropada(Resource):
 class Sailkapena(Resource):
     def get(self, league_id, year, team=None):
         key = 'rank_{}_{}'.format(league_id.upper(), year)
-        logging.info(key)
-        doc = db[key]
+        try:
+            doc = db[key]
+        except couchdb.http.ResourceNotFound:
+            return {'error': 'Stats not found'}, 404
+        result = doc['stats']
         if team:
-            return doc['stats'][team]
-        return doc['stats']
+            try:
+                result = result[team]
+            except KeyError:
+                return {'error': 'Team not found'}, 404
+        return result

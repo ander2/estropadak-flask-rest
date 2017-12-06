@@ -69,5 +69,18 @@ class EstropadakTestCase(unittest.TestCase):
         keys = ['wins', 'positions', 'position', 'points', 'best', 'worst']
         self.assertCountEqual(sailkapena.keys(), keys)
 
+    def testSailkapenaForTeamThatNotExists(self):
+        rv = self.app.get('/sailkapena/ACT/2017/Oria')
+        self.assertEqual(rv.status_code, 404)
+        sailkapena = json.loads(rv.data.decode('utf-8'))
+        self.assertEqual(sailkapena, {'error': 'Team not found'})
+        # self.assertCountEqual(sailkapena.keys(), [])
+
+    def testSailkapenaForTeamWithYearThatNotExists(self):
+        rv = self.app.get('/sailkapena/ACT/1900/Orio')
+        self.assertEqual(rv.status_code, 404)
+        sailkapena = json.loads(rv.data.decode('utf-8'))
+        self.assertEqual(sailkapena, {'error': 'Stats not found'})
+
 if __name__ == '__main__':
     unittest.main()
