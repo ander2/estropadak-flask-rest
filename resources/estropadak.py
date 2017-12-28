@@ -6,6 +6,11 @@ from flask_restful import Resource, reqparse
 couch_server = couchdb.Server()
 db = couch_server['estropadak']
 
+def normalize_id(row):
+    row['doc']['id'] = row['doc']['_id']
+    del row['doc']['_id']
+    del row['doc']['_rev']
+    return row
 
 class Years(Resource):
     def get(self):
@@ -18,6 +23,8 @@ class Years(Resource):
 class Estropadak(Resource):
     def get(self, league_id, year):
         league = league_id.upper()
+        if league_id.lower() == 'euskotren':
+            league = league_id.lower()
         yearz = "{}".format(year)
         fyear = year + "z"
         fyearz = "{}".format(fyear)
@@ -26,12 +33,12 @@ class Estropadak(Resource):
         end = [league, fyearz]
         try:
             estropadak = db.view("estropadak/all",
-                                 None,
+                                 normalize_id,
                                  startkey=start,
                                  endkey=end,
                                  include_docs=True,
                                  reduce=False)
-            result = estropadak.rows
+            result = [estropada['doc'] for estropada in estropadak.rows]
         except couchdb.http.ResourceNotFound:
             return {'error': 'Estropadak not found'}, 404
         return result
