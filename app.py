@@ -13,7 +13,12 @@ def routes(app):
     api.add_resource(Estropada, '/estropada/<estropada_id>')
 
 routes(app)
-cors = CORS(app, resources={r"/estropada[k]?/*": {"origins": "*"}})
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Methods', 'GET')
+    return response
 
 
 if __name__ == '__main__':
