@@ -19,6 +19,11 @@ class Years(Resource):
         del doc['_rev']
         return doc
 
+class ActiveYear(Resource):
+    def get(self):
+        doc = db['active_year']
+        return doc['year']
+
 
 class Estropadak(Resource):
     def get(self, league_id, year):
