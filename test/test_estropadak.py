@@ -1,5 +1,5 @@
 import os
-import app
+from app import app
 import json
 import logging
 import pytest
