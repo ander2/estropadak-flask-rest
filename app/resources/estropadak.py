@@ -2,9 +2,16 @@ import couchdb
 import sys
 import logging
 from flask_restful import Resource, reqparse
+from app.config import config
+import time
 
-couch_server = couchdb.Server()
-db = couch_server['estropadak']
+db = None
+while db is None:
+    try:
+        couch_server = couchdb.Server(config['COUCHDB'])
+        db = couch_server['estropadak']
+    except:
+        pass
 
 def normalize_id(row):
     row['doc']['id'] = row['doc']['_id']
