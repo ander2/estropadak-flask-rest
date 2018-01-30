@@ -3,6 +3,7 @@ import sys
 import logging
 from flask_restful import Resource, reqparse
 from app.config import config
+from estropadakparser.estropada.estropada import Estropada as EstropadaModel
 import time
 
 db = None
@@ -50,7 +51,15 @@ class Estropadak(Resource):
                                  endkey=end,
                                  include_docs=True,
                                  reduce=False)
-            result = [estropada['doc'] for estropada in estropadak.rows]
+            
+            # result = [EstropadaModel(estropada['doc']['izena'], **estropada['doc']) for estropada in estropadak.rows]
+            result = []
+            for estropada in estropadak.rows:
+                print(estropada['doc']['izena'])
+                izena = estropada['doc']['izena']
+                del(estropada['doc']['izena'])
+                doc = EstropadaModel(izena, **estropada['doc'])
+                result.append(doc.format_for_json(doc))
         except couchdb.http.ResourceNotFound:
             return {'error': 'Estropadak not found'}, 404
         return result
@@ -59,8 +68,16 @@ class Estropadak(Resource):
 class Estropada(Resource):
     def get(self, estropada_id):
         try:
-            doc = db[estropada_id]
-        except:
+            estropada = db[estropada_id]
+            izena = estropada['izena']
+            del estropada['izena']
+            doc = EstropadaModel(izena, **estropada)
+            doc = doc.format_for_json(doc)
+        except TypeError as error:
+            print("Type error:", error)
+            doc = {}
+        except couchdb.http.ResourceNotFound as error:
+            print("Not found:", error)
             doc = {}
         return doc
 
