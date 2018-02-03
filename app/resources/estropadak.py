@@ -3,6 +3,7 @@ import sys
 import logging
 from flask_restful import Resource, reqparse
 from app.config import config
+from estropadakparser.estropada.estropada import Estropada as EstropadaModel
 import time
 
 db = None
@@ -12,6 +13,74 @@ while db is None:
         db = couch_server['estropadak']
     except:
         pass
+
+def estropadak_transform(row):
+    if 'doc' in row:
+        document = row['doc']
+    else:
+        document = row
+    print('{:=^30}'.format(document['izena']))
+    izena = document['izena']
+    sailkapena = document['sailkapena']
+    del(document['izena'])
+    del(document['sailkapena'])
+    estropada = EstropadaModel(izena, **document)
+    for sailk in sailkapena:
+        estropada.taldeak_add(sailk)
+    return estropada
+
+class SailkapenakDAO:
+
+    @staticmethod
+    def get_sailkapena_by_league_year(league, year):
+        key = 'rank_{}_{}'.format(league.upper(), year)
+        try:
+            doc = db[key]
+        except couchdb.http.ResourceNotFound:
+            return None
+        result = doc['stats']
+        return result
+
+
+class EstropadakDAO:
+
+    @staticmethod
+    def get_estropada_by_id(id):
+        try:
+            estropada = estropadak_transform(db[id])
+        except TypeError as error:
+            print("Type error:", error)
+            estropada = None
+        except couchdb.http.ResourceNotFound as error:
+            print("Not found:", error)
+            estropada = None
+        return estropada
+
+    @staticmethod
+    def get_estropadak_by_league_year(league, year):
+        league = league.upper()
+        if league.lower() == 'euskotren':
+            league = league.lower()
+        yearz = "{}".format(year)
+        fyearz = "{}z".format(year)
+
+        start = [league, yearz]
+        end = [league, fyearz]
+        try:
+            estropadak = db.view("estropadak/all",
+                                 estropadak_transform,
+                                 startkey=start,
+                                 endkey=end,
+                                 include_docs=True,
+                                 reduce=False)
+            result = []
+            for estropada in estropadak.rows:
+                print(estropada.lekua)
+                result.append(estropada)
+            return result
+        except couchdb.http.ResourceNotFound:
+            return {'error': 'Estropadak not found'}, 404
+
 
 def normalize_id(row):
     row['doc']['id'] = row['doc']['_id']
@@ -34,47 +103,28 @@ class ActiveYear(Resource):
 
 class Estropadak(Resource):
     def get(self, league_id, year):
-        league = league_id.upper()
-        if league_id.lower() == 'euskotren':
-            league = league_id.lower()
-        yearz = "{}".format(year)
-        fyear = year + "z"
-        fyearz = "{}".format(fyear)
-
-        start = [league, yearz]
-        end = [league, fyearz]
-        try:
-            estropadak = db.view("estropadak/all",
-                                 normalize_id,
-                                 startkey=start,
-                                 endkey=end,
-                                 include_docs=True,
-                                 reduce=False)
-            result = [estropada['doc'] for estropada in estropadak.rows]
-        except couchdb.http.ResourceNotFound:
-            return {'error': 'Estropadak not found'}, 404
-        return result
+        estropadak = EstropadakDAO.get_estropadak_by_league_year(league_id, year)
+        return [estropada.format_for_json(estropada) for estropada in estropadak]
 
 
 class Estropada(Resource):
     def get(self, estropada_id):
-        try:
-            doc = db[estropada_id]
-        except:
-            doc = {}
-        return doc
+        estropada = EstropadakDAO.get_estropada_by_id(estropada_id)
+        if estropada is None:
+            return {}
+        else:
+            return estropada.format_for_json(estropada)
 
 class Sailkapena(Resource):
     def get(self, league_id, year, team=None):
-        key = 'rank_{}_{}'.format(league_id.upper(), year)
-        try:
-            doc = db[key]
-        except couchdb.http.ResourceNotFound:
+        stats = SailkapenakDAO.get_sailkapena_by_league_year(league_id, year)
+        if stats is None:
             return {'error': 'Stats not found'}, 404
-        result = doc['stats']
+
         if team:
             try:
-                result = result[team]
+                return stats[team]
             except KeyError:
                 return {'error': 'Team not found'}, 404
-        return result
+        else:
+            return stats
