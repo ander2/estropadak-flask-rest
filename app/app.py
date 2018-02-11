@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_restful import Api
 from flask_cors import CORS
-from app.resources.estropadak import ActiveYear, Estropadak, Estropada, Sailkapena, Years
+from app.resources.estropadak import ActiveYear, Estropadak, Estropada, Sailkapena, Years, Taldeak
 
 app = Flask(__name__)
 
@@ -12,6 +12,7 @@ def routes(app):
     api.add_resource(Sailkapena, '/sailkapena/<league_id>/<year>', '/sailkapena/<league_id>/<year>/<team>')
     api.add_resource(Estropadak, '/estropadak/<league_id>/<year>')
     api.add_resource(Estropada, '/estropada/<estropada_id>')
+    api.add_resource(Taldeak, '/taldeak/<talde_izena>', '/taldeak/<talde_izena>/<league_id>')
 
 routes(app)
 

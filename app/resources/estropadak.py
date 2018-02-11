@@ -75,7 +75,28 @@ class EstropadakDAO:
                                  reduce=False)
             result = []
             for estropada in estropadak.rows:
-                print(estropada.lekua)
+                result.append(estropada)
+            return result
+        except couchdb.http.ResourceNotFound:
+            return {'error': 'Estropadak not found'}, 404
+
+    @staticmethod
+    def get_estropadak_by_team(team, league_id):
+        start = [team]
+        if league_id:
+            start.append(league_id)
+        end = ["{}z".format(team)]
+        if league_id:
+            end.append(league_id)
+        try:
+            estropadak = db.view("estropadak/by_team",
+                                 estropadak_transform,
+                                 startkey=start,
+                                 endkey=end,
+                                 include_docs=True,
+                                 reduce=False)
+            result = []
+            for estropada in estropadak.rows:
                 result.append(estropada)
             return result
         except couchdb.http.ResourceNotFound:
@@ -128,3 +149,15 @@ class Sailkapena(Resource):
                 return {'error': 'Team not found'}, 404
         else:
             return stats
+
+class Taldeak(Resource):
+    def get(self, talde_izena, league_id=None):
+        all_names = db['talde_izenak']
+        normalized_name = all_names[talde_izena]
+        names = [key for key, val in all_names.items() if val == normalized_name]
+        result = []
+        for name in names:
+            estropadak = EstropadakDAO.get_estropadak_by_team(name, league_id)
+            result.extend(estropadak)
+        return [res.format_for_json(res) for res in result]
+            
