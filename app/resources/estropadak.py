@@ -3,7 +3,7 @@ import sys
 import logging
 from flask_restful import Resource, reqparse
 from app.config import config
-from estropadakparser.estropada.estropada import Estropada as EstropadaModel
+from estropadakparser.estropada.estropada import Estropada as EstropadaModel, TaldeEmaitza
 import time
 
 db = None
@@ -20,14 +20,13 @@ def estropadak_transform(row):
     else:
         document = row
     row = normalize_id(row)
-    print('{:=^30}'.format(document['izena']))
     izena = document['izena']
     sailkapena = document['sailkapena']
     del(document['izena'])
     del(document['sailkapena'])
     estropada = EstropadaModel(izena, **document)
     for sailk in sailkapena:
-        estropada.taldeak_add(sailk)
+        estropada.taldeak_add(TaldeEmaitza(**sailk))
     return estropada
 
 class SailkapenakDAO:
@@ -42,18 +41,42 @@ class SailkapenakDAO:
         result = doc['stats']
         return result
 
-
 class EstropadakDAO:
+    @staticmethod
+    def get_estropadak_by_league_year(league, year):
+        league = league.upper()
+        if league.lower() == 'euskotren':
+            league = league.lower()
+        yearz = "{}".format(year)
+        fyearz = "{}z".format(year)
+
+        start = [league, yearz]
+        end = [league, fyearz]
+        try:
+            estropadak = db.view("estropadak/all",
+                                 None,
+                                 startkey=start,
+                                 endkey=end,
+                                 include_docs=False,
+                                 reduce=False)
+            result = []
+            for estropada in estropadak.rows:
+                result.append({'id': estropada.id, 'data':estropada.key[1], 'izena': estropada.key[2]})
+            return result
+        except couchdb.http.ResourceNotFound:
+            return {'error': 'Estropadak not found'}, 404
+
+class EmaitzakDAO:
 
     @staticmethod
     def get_estropada_by_id(id):
         try:
             estropada = estropadak_transform(db[id])
         except TypeError as error:
-            print("Type error:", error)
+            logging.error("Not found", error)
             estropada = None
         except couchdb.http.ResourceNotFound as error:
-            print("Not found:", error)
+            logging.error("Not found", error)
             estropada = None
         return estropada
 
@@ -131,12 +154,16 @@ class ActiveYear(Resource):
 class Estropadak(Resource):
     def get(self, league_id, year):
         estropadak = EstropadakDAO.get_estropadak_by_league_year(league_id, year)
-        return [estropada.format_for_json(estropada) for estropada in estropadak]
+        return estropadak
 
+class Emaitzak(Resource):
+    def get(self, league_id, year):
+        estropadak = EmaitzakDAO.get_estropadak_by_league_year(league_id, year)
+        return [estropada.format_for_json(estropada) for estropada in estropadak]
 
 class Estropada(Resource):
     def get(self, estropada_id):
-        estropada = EstropadakDAO.get_estropada_by_id(estropada_id)
+        estropada = EmaitzakDAO.get_estropada_by_id(estropada_id)
         if estropada is None:
             return {}
         else:
