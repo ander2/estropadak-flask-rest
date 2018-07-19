@@ -21,6 +21,8 @@ def estropadak_transform(row):
         document = row
     row = normalize_id(row)
     izena = document['izena']
+    if 'sailkapena' not in document:
+        document['sailkapena'] = []
     sailkapena = document['sailkapena']
     del(document['izena'])
     del(document['sailkapena'])
