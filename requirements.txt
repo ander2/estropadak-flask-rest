@@ -1,5 +1,4 @@
 CouchDB==1.1
--e git+https://kelertxiki@bitbucket.org/kelertxiki/estropadak-lxml.git@d9afd0d50d31961509f1d1962797be0c8bf8e136#egg=EstropadakParser-origin/develop
 Flask==0.11.1
 Flask-Cors==3.0.2
 Flask-RESTful==0.3.5
