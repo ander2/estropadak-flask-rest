@@ -63,7 +63,15 @@ class EstropadakDAO:
                                  reduce=False)
             result = []
             for estropada in estropadak.rows:
-                result.append({'id': estropada.id, 'data':estropada.key[1], 'izena': estropada.key[2]})
+                puntuagarria = True
+                if db[estropada.id].get('puntuagarria', True) is False:
+                    puntuagarria = False
+                result.append({
+                    'id': estropada.id,
+                    'data':estropada.key[1],
+                    'izena': estropada.key[2],
+                    'puntuagarria': puntuagarria
+                })
             return result
         except couchdb.http.ResourceNotFound:
             return {'error': 'Estropadak not found'}, 404
