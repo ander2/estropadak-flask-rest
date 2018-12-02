@@ -1,8 +1,9 @@
 import os
-from app import app
+import datetime
 import json
 import logging
 import pytest
+from app import app
 
 class TestEstropadak():
 
@@ -18,12 +19,16 @@ class TestEstropadak():
     def testYears(self, estropadakApp):
         rv = estropadakApp.get('/years')
         years = json.loads(rv.data.decode('utf-8'))
-        assert all(year in ['act', 'arc1', 'arc2', 'euskotren'] for year in years.keys())
+        assert all(year in ['act', 'arc1', 'arc2', 'euskotren', 'ete'] for year in years.keys())
 
     def testActiveYear(self, estropadakApp):
         rv = estropadakApp.get('/active_year')
         year = json.loads(rv.data.decode('utf-8'))
-        assert year == 2017
+        n = datetime.datetime.now()
+        y = n.year
+        if (n.month < 5):
+            y = n.year - 1
+        assert year == y
 
     def testEstropadakList(self, estropadakApp):
         rv = estropadakApp.get('/estropadak/act/2010')
