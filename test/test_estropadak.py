@@ -31,17 +31,17 @@ class TestEstropadak():
         assert year == y
 
     def testEstropadakList(self, estropadakApp):
-        rv = estropadakApp.get('/estropadak/act/2010')
+        rv = estropadakApp.get('/estropadak?league=act&year=2010', )
         estropadak = json.loads(rv.data.decode('utf-8'))
         assert len(estropadak) == 20
 
     def testEstropadakListWithoutResults(self, estropadakApp):
-        rv = estropadakApp.get('/estropadak/act/1900')
+        rv = estropadakApp.get('/estropadak?league=act&year=1900')
         estropadak = json.loads(rv.data.decode('utf-8'))
         assert len(estropadak) == 0
 
     def testEstropadakListWithWrongLeague(self, estropadakApp):
-        rv = estropadakApp.get('/estropadak/actt/2010')
+        rv = estropadakApp.get('/estropadak?league=actt&year=2010')
         estropadak = json.loads(rv.data.decode('utf-8'))
         assert len(estropadak) == 0
 
@@ -82,3 +82,8 @@ class TestEstropadak():
         assert rv.status_code == 404
         sailkapena = json.loads(rv.data.decode('utf-8'))
         assert sailkapena == {'error': 'Stats not found'}
+
+    def testEmaitzak(self, estropadakApp):
+        rv = estropadakApp.get('/emaitzak?league=act&year=2010')
+        emaitzak = json.loads(rv.data.decode('utf-8'))
+        assert len(emaitzak) == 20

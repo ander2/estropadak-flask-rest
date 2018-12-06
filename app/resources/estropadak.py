@@ -162,13 +162,21 @@ class ActiveYear(Resource):
 
 
 class Estropadak(Resource):
-    def get(self, league_id, year):
-        estropadak = EstropadakDAO.get_estropadak_by_league_year(league_id, year)
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('league', type=str)
+        parser.add_argument('year', type=str)
+        args = parser.parse_args()
+        estropadak = EstropadakDAO.get_estropadak_by_league_year(args['league'], args['year'])
         return estropadak
 
 class Emaitzak(Resource):
-    def get(self, league_id, year):
-        estropadak = EmaitzakDAO.get_estropadak_by_league_year(league_id, year)
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('league', type=str)
+        parser.add_argument('year', type=str)
+        args = parser.parse_args()
+        estropadak = EmaitzakDAO.get_estropadak_by_league_year(args['league'], args['year'])
         return [estropada.format_for_json(estropada) for estropada in estropadak]
 
 class Estropada(Resource):
@@ -194,6 +202,13 @@ class Sailkapena(Resource):
             return stats
 
 class Taldeak(Resource):
+    def get(self):
+        all_names = db['talde_izenak']
+        normalized_names = sorted(list(set(all_names.values())))
+        return normalized_names
+            
+
+class TaldeakByName(Resource):
     def get(self, talde_izena, league_id=None):
         all_names = db['talde_izenak']
         normalized_name = all_names[talde_izena]
