@@ -16,7 +16,7 @@ def routes(app):
     api = Api(app)
     api.add_resource(Years, '/years')
     api.add_resource(ActiveYear, '/active_year')
-    api.add_resource(Sailkapena, '/sailkapena/<league_id>/<year>', '/sailkapena/<league_id>/<year>/<team>')
+    api.add_resource(Sailkapena, '/sailkapena')
     api.add_resource(Estropadak, '/estropadak')
     api.add_resource(Emaitzak, '/emaitzak')
     api.add_resource(Estropada, '/estropada/<estropada_id>')
