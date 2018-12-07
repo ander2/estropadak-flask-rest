@@ -43,6 +43,35 @@ class SailkapenakDAO:
         result = doc['stats']
         return result
 
+    @staticmethod
+    def get_sailkapena_by_league(league):
+        key = 'rank_{}'.format(league.upper())
+        league = league.upper()
+        if league.lower() == 'euskotren':
+            league = league.lower()
+        endkey = "{}z".format(key)
+
+        start = key
+        end = endkey
+        try:
+            ranks = db.view("estropadak/rank",
+                                 None,
+                                 startkey=start,
+                                 endkey=end,
+                                 include_docs=False,
+                                 reduce=False)
+            result = []
+            for rank in ranks.rows:
+                result.append({
+                    'id': rank.id,
+                    'izena': rank.key,
+                    'stats': rank.value['stats']
+                })
+            return result
+        except couchdb.http.ResourceNotFound:
+            return {'error': 'Estropadak not found'}, 404
+        return result
+
 class EstropadakDAO:
     @staticmethod
     def get_estropadak_by_league_year(league, year):
@@ -162,13 +191,21 @@ class ActiveYear(Resource):
 
 
 class Estropadak(Resource):
-    def get(self, league_id, year):
-        estropadak = EstropadakDAO.get_estropadak_by_league_year(league_id, year)
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('league', type=str)
+        parser.add_argument('year', type=str)
+        args = parser.parse_args()
+        estropadak = EstropadakDAO.get_estropadak_by_league_year(args['league'], args['year'])
         return estropadak
 
 class Emaitzak(Resource):
-    def get(self, league_id, year):
-        estropadak = EmaitzakDAO.get_estropadak_by_league_year(league_id, year)
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('league', type=str)
+        parser.add_argument('year', type=str)
+        args = parser.parse_args()
+        estropadak = EmaitzakDAO.get_estropadak_by_league_year(args['league'], args['year'])
         return [estropada.format_for_json(estropada) for estropada in estropadak]
 
 class Estropada(Resource):
@@ -180,20 +217,38 @@ class Estropada(Resource):
             return estropada.format_for_json(estropada)
 
 class Sailkapena(Resource):
-    def get(self, league_id, year, team=None):
-        stats = SailkapenakDAO.get_sailkapena_by_league_year(league_id, year)
+    def get(self):
+        stats = None
+        parser = reqparse.RequestParser()
+        parser.add_argument('league', type=str)
+        parser.add_argument('year', type=int)
+        parser.add_argument('team', type=str)
+        args = parser.parse_args()
+        if args.get('year', None) is None:
+            stats = SailkapenakDAO.get_sailkapena_by_league(args['league'])
+        else:
+            stats = SailkapenakDAO.get_sailkapena_by_league_year(args['league'], args['year'])
         if stats is None:
             return {'error': 'Stats not found'}, 404
 
-        if team:
+        if args.get('team', None):
             try:
-                return stats[team]
+                logging.info(stats)
+                team_stats = [ {"id": stat['id'], "stats": stat['stats'][args['team']]} for stat in stats if stat['stats'].get(args['team'], None)]
+                return team_stats
             except KeyError:
                 return {'error': 'Team not found'}, 404
         else:
             return stats
 
 class Taldeak(Resource):
+    def get(self):
+        all_names = db['talde_izenak']
+        normalized_names = sorted(list(set(all_names.values())))
+        return normalized_names
+            
+
+class TaldeakByName(Resource):
     def get(self, talde_izena, league_id=None):
         all_names = db['talde_izenak']
         normalized_name = all_names[talde_izena]

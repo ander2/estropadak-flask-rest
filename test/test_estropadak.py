@@ -1,8 +1,9 @@
 import os
-from app import app
+import datetime
 import json
 import logging
 import pytest
+from app import app
 
 class TestEstropadak():
 
@@ -18,25 +19,29 @@ class TestEstropadak():
     def testYears(self, estropadakApp):
         rv = estropadakApp.get('/years')
         years = json.loads(rv.data.decode('utf-8'))
-        assert all(year in ['act', 'arc1', 'arc2', 'euskotren'] for year in years.keys())
+        assert all(year in ['act', 'arc1', 'arc2', 'euskotren', 'ete'] for year in years.keys())
 
     def testActiveYear(self, estropadakApp):
         rv = estropadakApp.get('/active_year')
         year = json.loads(rv.data.decode('utf-8'))
-        assert year == 2017
+        n = datetime.datetime.now()
+        y = n.year
+        if (n.month < 5):
+            y = n.year - 1
+        assert year == y
 
     def testEstropadakList(self, estropadakApp):
-        rv = estropadakApp.get('/estropadak/act/2010')
+        rv = estropadakApp.get('/estropadak?league=act&year=2010', )
         estropadak = json.loads(rv.data.decode('utf-8'))
         assert len(estropadak) == 20
 
     def testEstropadakListWithoutResults(self, estropadakApp):
-        rv = estropadakApp.get('/estropadak/act/1900')
+        rv = estropadakApp.get('/estropadak?league=act&year=1900')
         estropadak = json.loads(rv.data.decode('utf-8'))
         assert len(estropadak) == 0
 
     def testEstropadakListWithWrongLeague(self, estropadakApp):
-        rv = estropadakApp.get('/estropadak/actt/2010')
+        rv = estropadakApp.get('/estropadak?league=actt&year=2010')
         estropadak = json.loads(rv.data.decode('utf-8'))
         assert len(estropadak) == 0
 
@@ -51,29 +56,34 @@ class TestEstropadak():
         assert estropada == {}
 
     def testSailkapenaWithLoweCaseLeague(self, estropadakApp):
-        rv = estropadakApp.get('/sailkapena/act/2017')
+        rv = estropadakApp.get('/sailkapena?league=act&year=2017')
         sailkapena = json.loads(rv.data.decode('utf-8'))
         assert len(sailkapena.keys()) == 12
 
     def testSailkapenaWithUpperCaseLeague(self, estropadakApp):
-        rv = estropadakApp.get('/sailkapena/ACT/2017')
+        rv = estropadakApp.get('/sailkapena?league=act&year=2017')
         sailkapena = json.loads(rv.data.decode('utf-8'))
         assert len(sailkapena.keys()) == 12
 
     def testSailkapenaForTeam(self, estropadakApp):
-        rv = estropadakApp.get('/sailkapena/ACT/2017/Orio')
+        rv = estropadakApp.get('/sailkapena?league=act&year=2017&team=Orio')
         sailkapena = json.loads(rv.data.decode('utf-8'))
         keys = ['wins', 'positions', 'position', 'points', 'best', 'worst', 'cumulative']
         assert all(izenburua in keys for izenburua in sailkapena.keys()) 
 
     def testSailkapenaForTeamThatNotExists(self, estropadakApp):
-        rv = estropadakApp.get('/sailkapena/ACT/2017/Oria')
+        rv = estropadakApp.get('/sailkapena?league=act&year=2017&team=Oria')
         assert rv.status_code == 404
         sailkapena = json.loads(rv.data.decode('utf-8'))
         assert sailkapena == {'error': 'Team not found'}
 
     def testSailkapenaForTeamWithYearThatNotExists(self, estropadakApp):
-        rv = estropadakApp.get('/sailkapena/ACT/1900/Orio')
+        rv = estropadakApp.get('/sailkapena?league=act&year=1900&team=Oria')
         assert rv.status_code == 404
         sailkapena = json.loads(rv.data.decode('utf-8'))
         assert sailkapena == {'error': 'Stats not found'}
+
+    def testEmaitzak(self, estropadakApp):
+        rv = estropadakApp.get('/emaitzak?league=act&year=2010')
+        emaitzak = json.loads(rv.data.decode('utf-8'))
+        assert len(emaitzak) == 20
