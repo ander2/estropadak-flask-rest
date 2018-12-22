@@ -40,7 +40,7 @@ class SailkapenakDAO:
             doc = db[key]
         except couchdb.http.ResourceNotFound:
             return None
-        result = doc['stats']
+        result = doc
         return result
 
     @staticmethod
@@ -75,14 +75,21 @@ class SailkapenakDAO:
 class EstropadakDAO:
     @staticmethod
     def get_estropadak_by_league_year(league, year):
+        logging.info("League:%s and year: %s", league, year)
         league = league.upper()
         if league.lower() == 'euskotren':
             league = league.lower()
-        yearz = "{}".format(year)
-        fyearz = "{}z".format(year)
+        start = [league]
+        end = [league]
 
-        start = [league, yearz]
-        end = [league, fyearz]
+        if year is not None:
+            yearz = "{}".format(year)
+            fyearz = "{}z".format(year)
+            start.append(yearz)
+            end.append(fyearz)
+        else:
+            end = ["{}z".format(league)]
+
         try:
             estropadak = db.view("estropadak/all",
                                  None,
@@ -194,7 +201,7 @@ class Estropadak(Resource):
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument('league', type=str)
-        parser.add_argument('year', type=str)
+        parser.add_argument('year', type=str, default=None)
         args = parser.parse_args()
         estropadak = EstropadakDAO.get_estropadak_by_league_year(args['league'], args['year'])
         return estropadak
@@ -234,12 +241,20 @@ class Sailkapena(Resource):
         if args.get('team', None):
             try:
                 logging.info(stats)
-                team_stats = [ {"id": stat['id'], "stats": stat['stats'][args['team']]} for stat in stats if stat['stats'].get(args['team'], None)]
+                team_stats = [ {"id": stat['id'], "urtea": int(stat['id'][-4:]), "stats": stat['stats'][args['team']]} for stat in stats if stat['stats'].get(args['team'], None)]
                 return team_stats
             except KeyError:
                 return {'error': 'Team not found'}, 404
         else:
-            return stats
+            logging.warning(stats)
+            result = [
+                {
+                    "id": stats.id,
+                    "urtea": args['year'],
+                    "stats": stats['stats']
+                }
+            ]
+            return result
 
 class Taldeak(Resource):
     def get(self):
