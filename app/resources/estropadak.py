@@ -240,13 +240,20 @@ class Sailkapena(Resource):
 
         if args.get('team', None):
             try:
-                logging.info(stats)
-                team_stats = [ {"id": stat['id'], "urtea": int(stat['id'][-4:]), "stats": stat['stats'][args['team']]} for stat in stats if stat['stats'].get(args['team'], None)]
+                team_stats = []
+                for stat in stats:
+                     if stat['stats'].get(args['team'], None):
+                        team_stats.append({
+                            "id": stat['id'],
+                            "urtea": int(stat['id'][-4:]),
+                            "stats": {
+                                args['team']: stat['stats'][args['team']]
+                            } 
+                        })
                 return team_stats
             except KeyError:
                 return {'error': 'Team not found'}, 404
         else:
-            logging.warning(stats)
             result = [
                 {
                     "id": stats.id,
@@ -258,9 +265,19 @@ class Sailkapena(Resource):
 
 class Taldeak(Resource):
     def get(self):
-        all_names = db['talde_izenak']
-        normalized_names = sorted(list(set(all_names.values())))
-        return normalized_names
+        parser = reqparse.RequestParser()
+        parser.add_argument('league', type=str)
+        args = parser.parse_args()
+        teams = []
+        if args.get('league', None):
+            league = args.get('league')
+            if league in ['act', 'arc1', 'arc2', 'euskotren', 'ete']:
+                all_names = db['taldeak_' + league]
+                teams = sorted(all_names['taldeak'])
+        else:
+            all_names = db['talde_izenak']
+            teams = sorted(list(set(all_names.values())))
+        return teams
             
 
 class TaldeakByName(Resource):
