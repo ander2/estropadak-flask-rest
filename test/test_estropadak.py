@@ -74,15 +74,15 @@ class TestEstropadak():
 
     def testSailkapenaForTeamThatNotExists(self, estropadakApp):
         rv = estropadakApp.get('/sailkapena?league=act&team=Oria')
-        assert rv.status_code == 404
+        assert rv.status_code == 200
         sailkapena = json.loads(rv.data.decode('utf-8'))
-        assert sailkapena == {'error': 'Team not found'}
+        assert sailkapena == []
 
     def testSailkapenaForTeamWithYearThatNotExists(self, estropadakApp):
-        rv = estropadakApp.get('/sailkapena?league=act&year=1900&team=Oria')
-        assert rv.status_code == 404
+        rv = estropadakApp.get('/sailkapena?league=act&year=1900&team=Orio')
+        assert rv.status_code == 200
         sailkapena = json.loads(rv.data.decode('utf-8'))
-        assert sailkapena == {'error': 'Stats not found'}
+        assert sailkapena == []
 
     def testEmaitzak(self, estropadakApp):
         rv = estropadakApp.get('/emaitzak?league=act&year=2010')

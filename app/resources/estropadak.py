@@ -234,24 +234,23 @@ class Sailkapena(Resource):
         else:
             stats = SailkapenakDAO.get_sailkapena_by_league_year(args['league'], args['year'])
         if stats is None:
-            return {'error': 'Stats not found'}, 404
+            return []
 
         if args.get('team', None):
-            try:
-                team_stats = []
-                for stat in stats:
-                    logging.info(stat)
+            team_stats = []
+            for stat in stats:
+                try:
+                    _stats = stat['stats'][args['team']]
                     team_stats.append({
                         "id": stat.id,
                         "urtea": int(stat.id[-4:]),
                         "stats": {
-                            args['team']: stat['stats'][args['team']]
+                            args['team']: _stats
                         } 
                     })
-                return team_stats
-            except KeyError as e:
-                logging.exception('Team "%s" not found' % args['team'])
-                return {'error': 'Team not found'}, 404
+                except KeyError as e:
+                    logging.info('Team "%s" not found' % args['team'])
+            return team_stats
         else:
             result = [
                 {
