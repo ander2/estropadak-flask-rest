@@ -7,6 +7,7 @@ from estropadakparser.estropada.estropada import Estropada as EstropadaModel, Ta
 import time
 
 db = None
+logging.basicConfig(level='INFO')
 while db is None:
     try:
         couch_server = couchdb.Server(config['COUCHDB'])
@@ -27,6 +28,7 @@ def estropadak_transform(row):
     del(document['izena'])
     del(document['sailkapena'])
     estropada = EstropadaModel(izena, **document)
+    logging.info(estropada)
     for sailk in sailkapena:
         estropada.taldeak_add(TaldeEmaitza(**sailk))
     return estropada
@@ -40,7 +42,7 @@ class SailkapenakDAO:
             doc = db[key]
         except couchdb.http.ResourceNotFound:
             return None
-        result = doc
+        result = [doc]
         return result
 
     @staticmethod
@@ -58,15 +60,11 @@ class SailkapenakDAO:
                                  None,
                                  startkey=start,
                                  endkey=end,
-                                 include_docs=False,
+                                 include_docs=True,
                                  reduce=False)
             result = []
             for rank in ranks.rows:
-                result.append({
-                    'id': rank.id,
-                    'izena': rank.key,
-                    'stats': rank.value['stats']
-                })
+                result.append(rank.doc)
             return result
         except couchdb.http.ResourceNotFound:
             return {'error': 'Estropadak not found'}, 404
@@ -242,23 +240,24 @@ class Sailkapena(Resource):
             try:
                 team_stats = []
                 for stat in stats:
-                     if stat['stats'].get(args['team'], None):
-                        team_stats.append({
-                            "id": stat['id'],
-                            "urtea": int(stat['id'][-4:]),
-                            "stats": {
-                                args['team']: stat['stats'][args['team']]
-                            } 
-                        })
+                    logging.info(stat)
+                    team_stats.append({
+                        "id": stat.id,
+                        "urtea": int(stat.id[-4:]),
+                        "stats": {
+                            args['team']: stat['stats'][args['team']]
+                        } 
+                    })
                 return team_stats
-            except KeyError:
+            except KeyError as e:
+                logging.exception('Team "%s" not found' % args['team'])
                 return {'error': 'Team not found'}, 404
         else:
             result = [
                 {
-                    "id": stats.id,
+                    "id": stats[0].id,
                     "urtea": args['year'],
-                    "stats": stats['stats']
+                    "stats": stats[0]['stats']
                 }
             ]
             return result

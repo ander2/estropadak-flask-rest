@@ -58,21 +58,22 @@ class TestEstropadak():
     def testSailkapenaWithLoweCaseLeague(self, estropadakApp):
         rv = estropadakApp.get('/sailkapena?league=act&year=2017')
         sailkapena = json.loads(rv.data.decode('utf-8'))
-        assert len(sailkapena.keys()) == 12
+        assert len(sailkapena[0]['stats'].keys()) == 12
 
     def testSailkapenaWithUpperCaseLeague(self, estropadakApp):
         rv = estropadakApp.get('/sailkapena?league=act&year=2017')
         sailkapena = json.loads(rv.data.decode('utf-8'))
-        assert len(sailkapena.keys()) == 12
+        assert len(sailkapena[0]['stats'].keys()) == 12
 
     def testSailkapenaForTeam(self, estropadakApp):
         rv = estropadakApp.get('/sailkapena?league=act&year=2017&team=Orio')
         sailkapena = json.loads(rv.data.decode('utf-8'))
         keys = ['wins', 'positions', 'position', 'points', 'best', 'worst', 'cumulative']
-        assert all(izenburua in keys for izenburua in sailkapena.keys()) 
+        print(sailkapena)
+        assert all(izenburua in keys for izenburua in sailkapena[0]['stats']['Orio'].keys()) 
 
     def testSailkapenaForTeamThatNotExists(self, estropadakApp):
-        rv = estropadakApp.get('/sailkapena?league=act&year=2017&team=Oria')
+        rv = estropadakApp.get('/sailkapena?league=act&team=Oria')
         assert rv.status_code == 404
         sailkapena = json.loads(rv.data.decode('utf-8'))
         assert sailkapena == {'error': 'Team not found'}
