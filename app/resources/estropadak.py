@@ -1,19 +1,8 @@
-import couchdb
-import sys
 import logging
-from flask_restful import Resource, reqparse
-from app.config import config
-from estropadakparser.estropada.estropada import Estropada as EstropadaModel, TaldeEmaitza
 import time
-
-db = None
-logging.basicConfig(level='INFO')
-while db is None:
-    try:
-        couch_server = couchdb.Server(config['COUCHDB'])
-        db = couch_server['estropadak']
-    except:
-        pass
+from flask_restful import Resource, reqparse
+from estropadakparser.estropada.estropada import Estropada as EstropadaModel, TaldeEmaitza
+from app.db_connection import db
 
 def estropadak_transform(row):
     if 'doc' in row:
@@ -260,32 +249,3 @@ class Sailkapena(Resource):
                 }
             ]
             return result
-
-class Taldeak(Resource):
-    def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('league', type=str)
-        args = parser.parse_args()
-        teams = []
-        if args.get('league', None):
-            league = args.get('league')
-            if league in ['act', 'arc1', 'arc2', 'euskotren', 'ete']:
-                all_names = db['taldeak_' + league]
-                teams = sorted(all_names['taldeak'])
-        else:
-            all_names = db['talde_izenak']
-            teams = sorted(list(set(all_names.values())))
-        return teams
-            
-
-class TaldeakByName(Resource):
-    def get(self, talde_izena, league_id=None):
-        all_names = db['talde_izenak']
-        normalized_name = all_names[talde_izena]
-        names = [key for key, val in all_names.items() if val == normalized_name]
-        result = []
-        for name in names:
-            estropadak = EstropadakDAO.get_estropadak_by_team(name, league_id)
-            result.extend(estropadak)
-        return [res.format_for_json(res) for res in result]
-            
