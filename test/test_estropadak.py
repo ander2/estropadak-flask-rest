@@ -68,7 +68,7 @@ class TestEstropadak():
     def testSailkapenaForTeam(self, estropadakApp):
         rv = estropadakApp.get('/sailkapena?league=act&year=2017&team=Orio')
         sailkapena = json.loads(rv.data.decode('utf-8'))
-        keys = ['wins', 'positions', 'position', 'points', 'best', 'worst', 'cumulative']
+        keys = ['wins', 'positions', 'position', 'points', 'best', 'worst', 'cumulative', 'age', 'rowers']
         print(sailkapena)
         assert all(izenburua in keys for izenburua in sailkapena[0]['stats']['Orio'].keys()) 
 
