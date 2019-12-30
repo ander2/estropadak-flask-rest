@@ -4,6 +4,40 @@ from app.db_connection import db
 from flask_restful import Resource, reqparse
 
 
+class PlantilaDAO:
+
+    @staticmethod
+    def get_plantila(team, league, year):
+        try:
+            id = f'team_{league}_{year}_{team}'
+            taldea = db[id]
+            talde_izenak = db['talde_izenak']
+            talde_izenak = {k.lower(): v for k,v in talde_izenak.items()}
+            _rowers = []
+            for i, rower in enumerate(taldea['rowers']):
+                historial = []
+                for h in rower['historial']:
+                    t = list(h.items())
+                    try:
+                        normalized_name = talde_izenak[t[0][1].lower()]
+                    except KeyError:
+                        normalized_name = t[0][1]
+                    historial.append({'name': normalized_name, 'year': t[0][0]})
+                rower['historial'] = historial
+                rower['name'] =  ' '.join(rower['name'].split(' ')[:-1]).title() 
+                rower['index'] = i
+                _rowers.append(rower)
+            taldea['rowers'] = _rowers
+            
+        except TypeError as error:
+            logging.error("Not found", error)
+            taldea = None
+        except couchdb.http.ResourceNotFound as error:
+            logging.error("Not found", error)
+            taldea = None
+        return taldea
+
+
 class TaldeakDAO:
 
     @staticmethod
@@ -63,8 +97,14 @@ class Plantilla(Resource):
         parser.add_argument('year', type=int, required=True)
         parser.add_argument('league', type=str, required=True)
         args = parser.parse_args()
-        teams = TaldeakDAO.get_taldeak(args['league'], args['year'], team)
-        return teams
+        leagues = ['ACT', 'ARC1', 'ARC2', 'ETE', 'EUSKOTREN']
+        league = args['league'].upper()
+        if league not in leagues:
+            return {'message': 'Not valid league'}, 400
+        team = PlantilaDAO.get_plantila(team, league, args['year'])
+        if team is None:
+            return {'message': 'Team not found'}, 404
+        return team
 
 class TaldeakByName(Resource):
     def get(self, talde_izena, league_id=None):
