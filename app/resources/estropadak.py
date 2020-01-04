@@ -1,7 +1,7 @@
 import couchdb
 import logging
 import time
-from flask_restful import Resource, reqparse
+from flask_restful import Resource, reqparse, inputs
 from estropadakparser.estropada.estropada import Estropada as EstropadaModel, TaldeEmaitza
 from app.resources.taldeak import TaldeakDAO
 from app.db_connection import db
@@ -184,9 +184,15 @@ def normalize_id(row):
 
 class Years(Resource):
     def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('historial', required=False, default=False)
+        args = parser.parse_args()
         doc = db['years']
         del doc['_id']
         del doc['_rev']
+        if args['historial'] and inputs.boolean(args['historial']):
+            for k, v in doc.items():
+                doc[k] = [year for year in v if year > 2009]
         return doc
 
 class ActiveYear(Resource):
