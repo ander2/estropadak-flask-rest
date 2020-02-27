@@ -27,8 +27,12 @@ def estropadak_transform(row):
 class SailkapenakDAO:
 
     @staticmethod
-    def get_sailkapena_by_league_year(league, year):
-        key = 'rank_{}_{}'.format(league.upper(), year)
+    def get_sailkapena_by_league_year(league, year, category):
+        if league == 'gbl':
+            _category = category.replace(' ', '_').lower()
+            key = 'rank_{}_{}_{}'.format(league.upper(), year, _category)
+        else:
+            key = 'rank_{}_{}'.format(league.upper(), year)
         try:
             doc = db[key]
         except couchdb.http.ResourceNotFound:
@@ -235,11 +239,12 @@ class Sailkapena(Resource):
         parser.add_argument('league', type=str)
         parser.add_argument('year', type=int)
         parser.add_argument('team', type=str)
+        parser.add_argument('category', type=str)
         args = parser.parse_args()
         if args.get('year', None) is None:
             stats = SailkapenakDAO.get_sailkapena_by_league(args['league'])
         else:
-            stats = SailkapenakDAO.get_sailkapena_by_league_year(args['league'], args['year'])
+            stats = SailkapenakDAO.get_sailkapena_by_league_year(args['league'], args['year'], args['category'])
         if stats is None:
             return []
 
@@ -253,7 +258,7 @@ class Sailkapena(Resource):
                         "urtea": int(stat.id[-4:]),
                         "stats": {
                             args['team']: _stats
-                        } 
+                        }
                     })
                 except KeyError as e:
                     logging.info('Team "%s" not found' % args['team'])
