@@ -28,7 +28,7 @@ class SailkapenakDAO:
 
     @staticmethod
     def get_sailkapena_by_league_year(league, year, category):
-        if league == 'gbl':
+        if league == 'gbl' or league == 'bbl':
             _category = category.replace(' ', '_').lower()
             key = 'rank_{}_{}_{}'.format(league.upper(), year, _category)
         else:
@@ -144,10 +144,10 @@ class EmaitzakDAO:
                     alt_names = team_names[0]['alt_names']
             for estropada in estropadak.rows:
                 team_estropada = estropada
-                logging.info(team)
-                if len(alt_names) > 0:
+                if len(alt_names) > 0 and hasattr(estropada, 'sailkapena'):
                     team_estropada.sailkapena = [talde_emaitza for talde_emaitza in estropada.sailkapena if talde_emaitza.talde_izena in alt_names]
-                result.append(team_estropada)
+                if hasattr(estropada, 'sailkapena'):
+                    result.append(team_estropada)
             return result
         except couchdb.http.ResourceNotFound:
             return {'error': 'Estropadak not found'}, 404
