@@ -1,17 +1,16 @@
 import logging
 from flask import Flask
 from flask_restful import Api
-from flask_cors import CORS
 from app.resources.estropadak import (ActiveYear,
-                                     Estropadak,
-                                     Estropada,
-                                     Years)
+                                      Estropadak,
+                                      Estropada)
 from app.resources.taldeak import Taldeak, TaldeakByLeague, Plantilla
-from app.resources import Sailkapena, Emaitzak
+from app.resources import Sailkapena, Emaitzak, Years
 
 logging.basicConfig(level='INFO')
 
 app = Flask(__name__)
+
 
 def routes(app):
     api = Api(app)
@@ -24,9 +23,10 @@ def routes(app):
     api.add_resource(Taldeak, '/taldeak')
     api.add_resource(TaldeakByLeague, '/taldeak/<league>')
     api.add_resource(Plantilla, '/taldeak/<team>/plantilla')
-    # api.add_resource(TaldeakByName, '/taldeak/<talde_izena>', '/taldeak/<talde_izena>/<league_id>')
+
 
 routes(app)
+
 
 @app.after_request
 def after_request(response):
