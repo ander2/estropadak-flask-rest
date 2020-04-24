@@ -3,12 +3,11 @@ from flask import Flask
 from flask_restful import Api
 from flask_cors import CORS
 from app.resources.estropadak import (ActiveYear,
-                                     Emaitzak,
                                      Estropadak,
                                      Estropada,
                                      Years)
 from app.resources.taldeak import Taldeak, TaldeakByLeague, Plantilla
-from app.resources import Sailkapena
+from app.resources import Sailkapena, Emaitzak
 
 logging.basicConfig(level='INFO')
 
