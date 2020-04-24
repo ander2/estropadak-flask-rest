@@ -1,9 +1,8 @@
-import os
 import datetime
 import json
-import logging
 import pytest
 from app import app
+
 
 class TestEstropadak():
 
@@ -13,8 +12,6 @@ class TestEstropadak():
 
     def tearDown(self):
         pass
-        #os.close(self.db_fd)
-        #os.unlink(index.app.config['DATABASE'])
 
     def testYears(self, estropadakApp):
         rv = estropadakApp.get('/years')
@@ -53,9 +50,3 @@ class TestEstropadak():
         rv = estropadakApp.get('/estropada/fuck')
         estropada = json.loads(rv.data.decode('utf-8'))
         assert estropada == {}
-
-
-    def testEmaitzak(self, estropadakApp):
-        rv = estropadakApp.get('/emaitzak?league=act&year=2010')
-        emaitzak = json.loads(rv.data.decode('utf-8'))
-        assert len(emaitzak) == 20
