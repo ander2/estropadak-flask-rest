@@ -4,8 +4,10 @@ from flask_restful import Api
 from app.resources.estropadak import (ActiveYear,
                                       Estropadak,
                                       Estropada)
-from app.resources.taldeak import Taldeak, TaldeakByLeague, Plantilla
-from app.resources import Sailkapena, Emaitzak, Years
+from app.resources import (
+    Sailkapena, Emaitzak, Years, Taldeak, TaldeakByLeague, Plantilla
+)
+
 
 logging.basicConfig(level='INFO')
 
