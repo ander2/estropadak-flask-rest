@@ -27,20 +27,18 @@ class TestEstropadak():
 
     def testEstropadakListWithoutResults(self, estropadakApp):
         rv = estropadakApp.get('/estropadak?league=act&year=1900')
-        estropadak = json.loads(rv.data.decode('utf-8'))
-        assert len(estropadak) == 0
+        assert rv.status_code == 400
 
     def testEstropadakListWithWrongLeague(self, estropadakApp):
         rv = estropadakApp.get('/estropadak?league=actt&year=2010')
-        estropadak = json.loads(rv.data.decode('utf-8'))
-        assert len(estropadak) == 0
+        assert rv.status_code == 400
 
     def testEstropada(self, estropadakApp):
-        rv = estropadakApp.get('/estropada/1c79d46b8c74ad399d54fd7ee40005e3')
+        rv = estropadakApp.get('/estropadak/1c79d46b8c74ad399d54fd7ee40005e3')
         estropada = json.loads(rv.data.decode('utf-8'))
         assert estropada['izena'] == 'III Bandera Euskadi Basque Country'
 
     def testEstropadaNotFound(self, estropadakApp):
-        rv = estropadakApp.get('/estropada/fuck')
-        estropada = json.loads(rv.data.decode('utf-8'))
-        assert estropada == {}
+        rv = estropadakApp.get('/estropadak/fuck')
+        # estropada = json.loads(rv.data.decode('utf-8'))
+        assert rv.status_code == 404

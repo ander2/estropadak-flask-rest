@@ -1,9 +1,12 @@
 import couchdb
 import logging
+import app.config
 
-from flask_restful import Resource, reqparse
+from flask_restx import Namespace, Resource
 from app.db_connection import db
-from .utils import estropadak_transform
+from .utils import estropadak_transform, league_year_parser
+
+api = Namespace('estropadak', description='')
 
 
 class EstropadakDAO:
@@ -59,28 +62,25 @@ class EstropadakDAO:
             return {'error': 'Estropadak not found'}, 404
 
 
-class ActiveYear(Resource):
-    def get(self):
-        doc = db['active_year']
-        return doc['year']
-
-
+@api.route('/', strict_slashes=False)
 class Estropadak(Resource):
+    @api.expect(league_year_parser, validate=True)
     def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('league', type=str)
-        parser.add_argument('year', type=str, default=None)
-        args = parser.parse_args()
+        args = league_year_parser.parse_args()
+        if args.get('year') and args.get('year') < app.config.MIN_YEAR:
+            return "Year not found", 400
+        logging.info(args.get('year'))
         estropadak = EstropadakDAO.get_estropadak_by_league_year(
             args['league'],
             args['year'])
         return estropadak
 
 
+@api.route('/<string:estropada_id>')
 class Estropada(Resource):
     def get(self, estropada_id):
         estropada = EstropadakDAO.get_estropada_by_id(estropada_id)
         if estropada is None:
-            return {}
+            return "Estropada not found", 404
         else:
             return estropada.format_for_json(estropada)

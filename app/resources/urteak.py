@@ -1,11 +1,17 @@
 from app.db_connection import db
-from flask_restful import Resource, reqparse, inputs
+from flask_restx import Namespace, Resource, reqparse, inputs
+
+api = Namespace('years', description='')
 
 
+parser = reqparse.RequestParser()
+parser.add_argument('historial', required=False, default=False)
+
+
+@api.route('/', strict_slashes=False)
 class Years(Resource):
+    @api.expect(parser, validate=True)
     def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('historial', required=False, default=False)
         args = parser.parse_args()
         doc = db['years']
         del doc['_id']

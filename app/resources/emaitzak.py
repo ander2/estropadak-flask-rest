@@ -2,9 +2,11 @@ import couchdb
 import logging
 
 from app.db_connection import db
-from flask_restful import Resource, reqparse
 from .utils import estropadak_transform
 from .taldeak import TaldeakDAO
+from flask_restx import Namespace, Resource, reqparse
+
+api = Namespace('emaitzak', description='')
 
 
 class EmaitzakDAO:
@@ -80,6 +82,7 @@ class EmaitzakDAO:
             return {'error': 'Estropadak not found'}, 404
 
 
+@api.route('/', strict_slashes=False)
 class Emaitzak(Resource):
     def get(self):
         parser = reqparse.RequestParser()

@@ -1,5 +1,8 @@
 import logging
+import app.config
+
 from estropadakparser.estropada.estropada import Estropada, TaldeEmaitza
+from flask_restx import reqparse
 
 
 def normalize_id(row):
@@ -31,3 +34,14 @@ def estropadak_transform(row):
     for sailk in sailkapena:
         estropada.taldeak_add(TaldeEmaitza(**sailk))
     return estropada
+
+
+league_year_parser = reqparse.RequestParser()
+league_year_parser.add_argument('league', type=str, choices=app.config.LEAGUES, case_sensitive=False)
+league_year_parser.add_argument('year', type=int)
+
+required_league_year_parser = reqparse.RequestParser()
+required_league_year_parser.add_argument('league',
+                                         type=str, choices=app.config.LEAGUES,
+                                         case_sensitive=False, required=True)
+required_league_year_parser.add_argument('year', type=int, required=True)
