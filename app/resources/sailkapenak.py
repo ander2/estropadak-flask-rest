@@ -1,8 +1,11 @@
 import couchdb
 import logging
+import app.config
 
 from app.db_connection import db
-from flask_restful import Resource, reqparse, inputs
+from flask_restx import Namespace, Resource, reqparse
+
+api = Namespace('sailkapenak', description='')
 
 
 class SailkapenakDAO:
@@ -33,11 +36,11 @@ class SailkapenakDAO:
         end = endkey
         try:
             ranks = db.view("estropadak/rank",
-                                 None,
-                                 startkey=start,
-                                 endkey=end,
-                                 include_docs=True,
-                                 reduce=False)
+                            None,
+                            startkey=start,
+                            endkey=end,
+                            include_docs=True,
+                            reduce=False)
             result = []
             for rank in ranks.rows:
                 result.append(rank.doc)
@@ -47,18 +50,24 @@ class SailkapenakDAO:
         return result
 
 
+parser = reqparse.RequestParser()
+parser.add_argument('league', type=str, required=True, choices=app.config.LEAGUES, case_sensitive=False)
+parser.add_argument('year', type=int)
+parser.add_argument('team', type=str)
+parser.add_argument('category', type=str)
+
+
+@api.route('/', strict_slashes=False)
 class Sailkapena(Resource):
+    @api.expect(parser, validate=True)
     def get(self):
         stats = None
-        parser = reqparse.RequestParser()
-        parser.add_argument('league', type=str)
-        parser.add_argument('year', type=int)
-        parser.add_argument('team', type=str)
-        parser.add_argument('category', type=str)
         args = parser.parse_args()
-        if args.get('year', None) is None:
+        if args.get('year') is None:
             stats = SailkapenakDAO.get_sailkapena_by_league(args['league'])
         else:
+            if args.get('year') and args.get('year') < app.config.MIN_YEAR:
+                return "Year not found", 400
             stats = SailkapenakDAO.get_sailkapena_by_league_year(args['league'], args['year'], args['category'])
         if stats is None:
             return []
@@ -76,7 +85,8 @@ class Sailkapena(Resource):
                         }
                     })
                 except KeyError as e:
-                    logging.info('Team "%s" not found' % args['team'])
+                    logging.info('Team "%s" not found: %s', args['team'], e)
+                    return "Team not found", 400
             return team_stats
         else:
             result = [

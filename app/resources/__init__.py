@@ -2,7 +2,7 @@ from .sailkapenak import Sailkapena
 from .emaitzak import Emaitzak
 from .estropadak import Estropadak
 from .urteak import Years
-from .taldeak import Taldeak, TaldeakByLeague, Plantilla
+from .taldeak import Taldeak, Plantilla
 
 __all__ = (
     Emaitzak,
@@ -10,6 +10,5 @@ __all__ = (
     Sailkapena,
     Years,
     Taldeak,
-    TaldeakByLeague,
     Plantilla
 )
