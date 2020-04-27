@@ -2,7 +2,7 @@ import couchdb
 import logging
 from app.db_connection import db
 from flask_restx import Namespace, Resource
-from .utils import league_year_parser, required_league_year_parser
+from .utils import required_league_year_parser
 from .estropadak import EstropadakDAO
 
 api = Namespace('taldeak', description='')
@@ -84,6 +84,7 @@ class Taldeak(Resource):
         year = args.get('year')
         teams = TaldeakDAO.get_taldeak(league, year)
         return teams
+
 
 @api.route('/<team>')
 class Plantilla(Resource):
