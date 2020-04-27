@@ -1,13 +1,12 @@
-# estropadak-flask-restful
+# estropadak-flask-restx
 
-flask-restful implementation of estropadak REST API
+flask-restx implementation of estropadak REST API
 
 # Enpoints
 
-    * /estropadak/<league>/<year> : Return list of estropadak for given league and year
-    * /estropada/<estropada_id>: Return estropada data for given id
-    * /sailkapena/<league_id>/<year>: Return rank for given league and year
-    * /sailkapena/<league_id>/<year>/<team>: Return rank for given team in league and year
+    * /estropadak : Return list of estropadak for given league and year
+    * /estropadak/<estropada_id>: Return estropada data for given id
+    * /sailkapenak: Return rank for given league and year
 
 # Tests
 ```
