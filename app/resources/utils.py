@@ -45,3 +45,34 @@ required_league_year_parser.add_argument('league',
                                          type=str, choices=app.config.LEAGUES,
                                          case_sensitive=False, required=True)
 required_league_year_parser.add_argument('year', type=int, required=True)
+
+
+def get_team_color(team: str):
+    colors = {
+        'Arkote': 'yellow',
+        'Astillero': 'navy',
+        'Cabo': 'red',
+        'Castro': 'red',
+        'Deustu': 'red',
+        'Donostiarra': 'LightBlue',
+        'Getaria': 'wheat',
+        'Hondarribia': 'LimeGreen',
+        'Hibaika': 'black',
+        'Isuntza': 'LightBlue',
+        'Orio': 'yellow',
+        'Itsasoko ama': 'purple',
+        'Kaiku': 'green',
+        'Ondarroa': 'red',
+        'Portugalete': 'yellow',
+        'San Juan': 'pink',
+        'San Pedro': 'purple',
+        'Tiran': 'blue',
+        'Urdaibai': 'blue',
+        'Zarautz': 'blue',
+        'Zumaia': 'red',
+        'Zierbena': 'chocolate'
+    }
+    try:
+        return colors[team]
+    except KeyError:
+        return 'blue'
