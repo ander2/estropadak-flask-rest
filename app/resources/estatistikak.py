@@ -89,6 +89,10 @@ class EstatistikakLogic():
                           for i, val in enumerate(zip(stats['cumulative'], estropadak))]
                 team_values["values"] = values
                 result.append(team_values)
+        try:
+            result = sorted(result, key=lambda x: x['values'][-1]['value'])
+        except IndexError:
+            pass
         return result
 
     @staticmethod
