@@ -12,4 +12,4 @@ if 'DBNAME' in os.environ:
     config['DBNAME'] = os.environ['DBNAME']
 
 MIN_YEAR = 2002
-LEAGUES = ['ACT', 'ARC1', 'ARC2', 'EUSKOTREN', 'ETE', 'GBL']
+LEAGUES = ['ACT', 'ARC1', 'ARC2', 'EUSKOTREN', 'ETE', 'GBL', 'TXAPELKETAK']
