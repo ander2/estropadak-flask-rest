@@ -69,7 +69,6 @@ class Estropadak(Resource):
         args = league_year_parser.parse_args()
         if args.get('year') and args.get('year') < app.config.MIN_YEAR:
             return "Year not found", 400
-        logging.info(args.get('year'))
         estropadak = EstropadakDAO.get_estropadak_by_league_year(
             args['league'],
             args['year'])
