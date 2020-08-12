@@ -44,7 +44,7 @@ required_league_year_parser = reqparse.RequestParser()
 required_league_year_parser.add_argument('league',
                                          type=str, choices=app.config.LEAGUES,
                                          case_sensitive=False, required=True)
-required_league_year_parser.add_argument('year', type=int, required=True)
+required_league_year_parser.add_argument('year', type=int, required=False)
 
 
 def get_team_color(team: str):

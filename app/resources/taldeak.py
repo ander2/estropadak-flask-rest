@@ -57,18 +57,26 @@ class TaldeakDAO:
         return taldea
 
     @staticmethod
-    def get_taldeak(league, year):
+    def get_taldeak(league, year=None):
         league = league.upper()
         if league.lower() == 'euskotren':
             league = league.lower()
 
         taldeak = []
         try:
-            resume = db[f'rank_{league}_{year}']
-            all_teams = db['talde_izenak']
-            for taldea in resume['stats'].keys():
-                alt_names = [alt for alt, name in all_teams.items() if name == taldea]
-                taldeak.append({'name': taldea, 'alt_names': alt_names})
+            if year is not None:
+                resume = db[f'rank_{league}_{year}']
+                all_teams = db['talde_izenak']
+                for taldea in resume['stats'].keys():
+                    alt_names = [alt for alt, name in all_teams.items() if name == taldea]
+                    taldeak.append({'name': taldea, 'alt_names': alt_names})
+            else:
+                league = league.lower()
+                resume = db[f'taldeak_{league}']
+                all_teams = db['talde_izenak']
+                for taldea in resume['taldeak']:
+                    alt_names = [alt for alt, name in all_teams.items() if name == taldea]
+                    taldeak.append({'name': taldea, 'alt_names': alt_names})
         except couchdb.http.ResourceNotFound as error:
             logging.error("Not found", error)
         return taldeak

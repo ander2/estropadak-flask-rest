@@ -30,7 +30,8 @@ def testSailkapenaForTeam(estropadakApp):
 
 def testSailkapenaForTeamThatNotExists(estropadakApp):
     rv = estropadakApp.get('/sailkapenak?league=act&team=Oria')
-    assert rv.status_code == 400
+    assert rv.status_code == 200
+    assert json.loads(rv.data) == []
 
 
 def testSailkapenaForTeamWithYearThatNotExists(estropadakApp):

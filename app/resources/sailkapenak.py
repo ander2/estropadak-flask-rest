@@ -53,7 +53,7 @@ class SailkapenakDAO:
 parser = reqparse.RequestParser()
 parser.add_argument('league', type=str, required=True, choices=app.config.LEAGUES, case_sensitive=False)
 parser.add_argument('year', type=int)
-parser.add_argument('team', type=str)
+parser.add_argument('team', type=str, action="append", default=[])
 parser.add_argument('category', type=str)
 
 
@@ -72,21 +72,18 @@ class Sailkapena(Resource):
         if stats is None:
             return []
 
-        if args.get('team', None):
+        if len(args.get('team', [])) > 0:
             team_stats = []
             for stat in stats:
                 try:
-                    _stats = stat['stats'][args['team']]
                     team_stats.append({
                         "id": stat.id,
                         "urtea": int(stat.id[-4:]),
-                        "stats": {
-                            args['team']: _stats
-                        }
+                        "stats": { t: stat['stats'][t] for t in args['team'] }
                     })
                 except KeyError as e:
                     logging.info('Team "%s" not found: %s', args['team'], e)
-                    return "Team not found", 400
+                    # return "Team not found", 400
             return team_stats
         else:
             result = [
