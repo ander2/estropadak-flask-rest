@@ -8,7 +8,7 @@ class TestEstropadak():
 
     @pytest.fixture()
     def estropadakApp(self):
-        return app.app.test_client()
+        return app.test_client()
 
     def tearDown(self):
         pass
