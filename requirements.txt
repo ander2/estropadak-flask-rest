@@ -21,7 +21,7 @@ pyparsing==2.4.7
 pyrsistent==0.16.0
 pytest==5.4.1
 python-dateutil==2.6.0
-python-engineio==1.1.2
+python-engineio==3.8.2.post1
 python-socketio==1.6.3
 pytz==2016.10
 six==1.10.0
