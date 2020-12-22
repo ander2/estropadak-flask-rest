@@ -33,6 +33,10 @@ class TestEstropadak():
         rv = estropadakApp.get('/estropadak?league=actt&year=2010')
         assert rv.status_code == 400
 
+    def testEstropadakWithoutParams(self, estropadakApp):
+        rv = estropadakApp.get('/estropadak')
+        assert rv.status_code == 200
+
     def testEstropada(self, estropadakApp):
         rv = estropadakApp.get('/estropadak/1c79d46b8c74ad399d54fd7ee40005e3')
         estropada = json.loads(rv.data.decode('utf-8'))

@@ -14,24 +14,27 @@ class EstropadakDAO:
     def get_estropada_by_id(id):
         try:
             estropada = estropadak_transform(db[id])
-        except TypeError as error:
-            logging.error("Not found", error)
+        except TypeError:
+            logging.error("Not found", exc_info=1)
             estropada = None
-        except couchdb.http.ResourceNotFound as error:
-            logging.error("Not found", error)
+        except couchdb.http.ResourceNotFound:
+            logging.error("Not found", exc_info=1)
             estropada = None
         return estropada
 
     @staticmethod
-    def get_estropadak_by_league_year(league, year):
+    def get_estropadak_by_league_year(league, year, page=0, count=app.config.PAGE_SIZE):
         logging.info("League:%s and year: %s", league, year)
-        league = league.upper()
-        if league.lower() == 'euskotren':
-            league = league.lower()
-        start = [league]
-        end = [league]
+        start = []
+        end = []
+        if league:
+            league = league.upper()
+            if league.lower() == 'euskotren':
+                league = league.lower()
+            start.append(league)
+            end.append(league)
 
-        if year is not None:
+        if year:
             yearz = "{}".format(year)
             fyearz = "{}z".format(year)
             start.append(yearz)
@@ -45,7 +48,9 @@ class EstropadakDAO:
                                  startkey=start,
                                  endkey=end,
                                  include_docs=False,
-                                 reduce=False)
+                                 reduce=False,
+                                 skip=count*page,
+                                 limit=count)
             result = []
             for estropada in estropadak.rows:
                 puntuagarria = True
@@ -71,7 +76,9 @@ class Estropadak(Resource):
             return "Year not found", 400
         estropadak = EstropadakDAO.get_estropadak_by_league_year(
             args['league'],
-            args['year'])
+            args['year'],
+            args['page'],
+            args['count'])
         return estropadak
 
 
