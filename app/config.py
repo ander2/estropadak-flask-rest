@@ -13,3 +13,4 @@ if 'DBNAME' in os.environ:
 
 MIN_YEAR = 2002
 LEAGUES = ['ACT', 'ARC1', 'ARC2', 'EUSKOTREN', 'ETE', 'GBL', 'TXAPELKETAK']
+PAGE_SIZE=50

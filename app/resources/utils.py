@@ -35,10 +35,11 @@ def estropadak_transform(row):
         estropada.taldeak_add(TaldeEmaitza(**sailk))
     return estropada
 
-
 league_year_parser = reqparse.RequestParser()
 league_year_parser.add_argument('league', type=str, choices=app.config.LEAGUES, case_sensitive=False)
 league_year_parser.add_argument('year', type=int)
+league_year_parser.add_argument('page', type=int, help="Page number", default=0)
+league_year_parser.add_argument('count', type=int, help="Elements per page", default=app.config.PAGE_SIZE)
 
 required_league_year_parser = reqparse.RequestParser()
 required_league_year_parser.add_argument('league',
