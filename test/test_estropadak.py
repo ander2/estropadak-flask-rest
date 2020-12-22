@@ -37,6 +37,18 @@ class TestEstropadak():
         rv = estropadakApp.get('/estropadak')
         assert rv.status_code == 200
 
+    def testEstropadakWithBadPaginationParams(self, estropadakApp):
+        rv = estropadakApp.get('/estropadak?page=r')
+        assert rv.status_code == 400
+        rv = estropadakApp.get('/estropadak?count=r')
+        assert rv.status_code == 400
+
+    def testEstropadakWithDefaultPaginationParams(self, estropadakApp):
+        rv = estropadakApp.get('/estropadak')
+        assert rv.status_code == 200
+        print(rv.get_json())
+        assert len(rv.get_json()) == 50
+
     def testEstropada(self, estropadakApp):
         rv = estropadakApp.get('/estropadak/1c79d46b8c74ad399d54fd7ee40005e3')
         estropada = json.loads(rv.data.decode('utf-8'))
