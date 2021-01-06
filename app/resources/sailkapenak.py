@@ -1,4 +1,3 @@
-import couchdb
 import logging
 import app.config
 
@@ -19,7 +18,7 @@ class SailkapenakDAO:
             key = 'rank_{}_{}'.format(league.upper(), year)
         try:
             doc = db[key]
-        except couchdb.http.ResourceNotFound:
+        except KeyError:
             return None
         result = [doc]
         return result
@@ -35,17 +34,17 @@ class SailkapenakDAO:
         start = key
         end = endkey
         try:
-            ranks = db.view("estropadak/rank",
-                            None,
+            ranks = db.get_view_result("estropadak", "rank",
+                            raw_result=True,
                             startkey=start,
                             endkey=end,
                             include_docs=True,
                             reduce=False)
             result = []
-            for rank in ranks.rows:
-                result.append(rank.doc)
+            for rank in ranks['rows']:
+                result.append(rank['doc'])
             return result
-        except couchdb.http.ResourceNotFound:
+        except KeyError:
             return {'error': 'Estropadak not found'}, 404
         return result
 
@@ -77,8 +76,8 @@ class Sailkapena(Resource):
             for stat in stats:
                 try:
                     team_stats.append({
-                        "id": stat.id,
-                        "urtea": int(stat.id[-4:]),
+                        "id": stat['_id'],
+                        "urtea": int(stat['_id'][-4:]),
                         "stats": { t: stat['stats'][t] for t in args['team'] }
                     })
                 except KeyError as e:
@@ -88,7 +87,7 @@ class Sailkapena(Resource):
         else:
             result = [
                 {
-                    "id": stats[0].id,
+                    "id": stats[0]['_id'],
                     "urtea": args['year'],
                     "stats": stats[0]['stats']
                 }
