@@ -1,10 +1,13 @@
-import couchdb
+import time
+from cloudant.client import CouchDB
 from app.config import config
 
 db = None
 while db is None:
     try:
-        couch_server = couchdb.Server(config['COUCHDB'])
-        db = couch_server[config['DBNAME']]
+        couch_client = CouchDB(config['DBUSER'], config['DBPASS'], url=config['COUCHDB'], connect=True)
+        db = couch_client[config['DBNAME']]
     except:
+        print('Cannot connect to DB. Retrying...')
+        time.sleep(2)
         pass

@@ -1,4 +1,3 @@
-import couchdb
 import app.config
 
 from app.db_connection import db
@@ -19,7 +18,7 @@ class EstatistikakDAO:
             key = 'rank_{}_{}'.format(league.upper(), year)
         try:
             doc = db[key]
-        except couchdb.http.ResourceNotFound:
+        except KeyError:
             return None
         result = doc
         return result
@@ -35,17 +34,17 @@ class EstatistikakDAO:
         start = key
         end = endkey
         try:
-            ranks = db.view("estropadak/rank",
-                            None,
+            ranks = db.get_view_result("estropadak", "rank",
+                            raw_result=True,
                             startkey=start,
                             endkey=end,
                             include_docs=True,
                             reduce=False)
             result = []
-            for rank in ranks.rows:
-                result.append(rank.doc)
+            for rank in ranks['rows']:
+                result.append(rank['doc'])
             return result
-        except couchdb.http.ResourceNotFound:
+        except KeyError:
             return {'error': 'Estropadak not found'}, 404
         return result
 

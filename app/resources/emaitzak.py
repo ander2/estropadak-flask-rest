@@ -1,4 +1,3 @@
-import couchdb
 import logging
 
 from app.db_connection import db
@@ -15,11 +14,11 @@ class EmaitzakDAO:
     def get_estropada_by_id(id):
         try:
             estropada = estropadak_transform(db[id])
-        except TypeError as error:
-            logging.error("Not found", error)
+        except TypeError:
+            logging.debug("Not found", exc_info=1)
             estropada = None
-        except couchdb.http.ResourceNotFound as error:
-            logging.error("Not found", error)
+        except KeyError:
+            logging.debug("Not found", exc_info=1)
             estropada = None
         return estropada
 
@@ -33,8 +32,7 @@ class EmaitzakDAO:
         start = [league, yearz]
         end = [league, fyearz]
         try:
-            estropadak = db.view("estropadak/all",
-                                 estropadak_transform,
+            estropadak = db.get_view_result("estropadak", "all",
                                  startkey=start,
                                  endkey=end,
                                  include_docs=True,
@@ -46,7 +44,8 @@ class EmaitzakDAO:
                 team_names = [t for t in teams if t['name'] == team]
                 if len(team_names) > 0:
                     alt_names = team_names[0]['alt_names']
-            for estropada in estropadak.rows:
+            for estropada in estropadak:
+                estropada = estropadak_transform(estropada)
                 team_estropada = estropada
                 if len(alt_names) > 0 and hasattr(estropada, 'sailkapena'):
                     team_estropada.sailkapena = [
@@ -56,7 +55,7 @@ class EmaitzakDAO:
                 if hasattr(estropada, 'sailkapena'):
                     result.append(team_estropada)
             return result
-        except couchdb.http.ResourceNotFound:
+        except Exception:
             return {'error': 'Estropadak not found'}, 404
 
     @staticmethod
@@ -78,7 +77,7 @@ class EmaitzakDAO:
             for estropada in estropadak.rows:
                 result.append(estropada)
             return result
-        except couchdb.http.ResourceNotFound:
+        except KeyError:
             return {'error': 'Estropadak not found'}, 404
 
 

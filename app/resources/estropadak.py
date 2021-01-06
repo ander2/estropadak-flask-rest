@@ -1,4 +1,3 @@
-import couchdb
 import logging
 import app.config
 
@@ -17,7 +16,7 @@ class EstropadakDAO:
         except TypeError:
             logging.error("Not found", exc_info=1)
             estropada = None
-        except couchdb.http.ResourceNotFound:
+        except KeyError:
             logging.error("Not found", exc_info=1)
             estropada = None
         return estropada
@@ -43,27 +42,27 @@ class EstropadakDAO:
             end = ["{}z".format(league)]
 
         try:
-            estropadak = db.view("estropadak/all",
-                                 None,
-                                 startkey=start,
-                                 endkey=end,
-                                 include_docs=False,
-                                 reduce=False,
-                                 skip=count*page,
-                                 limit=count)
+            estropadak = db.get_view_result("estropadak", "all",
+                                            raw_result=True,
+                                            startkey=start,
+                                            endkey=end,
+                                            include_docs=False,
+                                            reduce=False,
+                                            skip=count*page,
+                                            limit=count)
             result = []
-            for estropada in estropadak.rows:
+            for estropada in estropadak['rows']:
                 puntuagarria = True
-                if db[estropada.id].get('puntuagarria', True) is False:
+                if db[estropada['id']].get('puntuagarria', True) is False:
                     puntuagarria = False
                 result.append({
-                    'id': estropada.id,
-                    'data': estropada.key[1],
-                    'izena': estropada.key[2],
+                    'id': estropada['id'],
+                    'data': estropada['key'][1],
+                    'izena': estropada['key'][2],
                     'puntuagarria': puntuagarria
                 })
             return result
-        except couchdb.http.ResourceNotFound:
+        except KeyError:
             return {'error': 'Estropadak not found'}, 404
 
 

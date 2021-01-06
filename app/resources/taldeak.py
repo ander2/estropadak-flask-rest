@@ -1,4 +1,3 @@
-import couchdb
 import logging
 from app.db_connection import db
 from flask_restx import Namespace, Resource
@@ -34,10 +33,10 @@ class PlantilaDAO:
             taldea['rowers'] = _rowers
 
         except TypeError as error:
-            logging.error("Not found", error)
+            logging.info("Not found", exc_info=1)
             taldea = None
-        except couchdb.http.ResourceNotFound as error:
-            logging.error("Not found", error)
+        except KeyError as error:
+            logging.info("Not found", exc_info=1)
             taldea = None
         return taldea
 
@@ -49,10 +48,10 @@ class TaldeakDAO:
         try:
             taldea = db[id]
         except TypeError as error:
-            logging.error("Not found", error)
+            logging.info("Not found", exc_info=1)
             taldea = None
-        except couchdb.http.ResourceNotFound as error:
-            logging.error("Not found", error)
+        except KeyError as error:
+            logging.info("Not found", exc_info=1)
             taldea = None
         return taldea
 
@@ -77,8 +76,8 @@ class TaldeakDAO:
                 for taldea in resume['taldeak']:
                     alt_names = [alt for alt, name in all_teams.items() if name == taldea]
                     taldeak.append({'name': taldea, 'alt_names': alt_names})
-        except couchdb.http.ResourceNotFound as error:
-            logging.error("Not found", error)
+        except KeyError as error:
+            logging.info("Not found", exc_info=1)
         return taldeak
 
 
