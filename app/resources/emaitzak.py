@@ -1,5 +1,7 @@
+from json.decoder import JSONDecodeError
 import app.config
 import logging
+import json
 
 from app.db_connection import db
 from .utils import estropadak_transform
@@ -24,41 +26,25 @@ class EmaitzakDAO:
         return estropada
 
     @staticmethod
-    def get_estropadak_by_league_year(league, year, team=None):
+    def get_emaitzak_by_league_year(league, year, team=None):
         league = league.upper()
         if league.lower() == 'euskotren':
             league = league.lower()
         if year:
-            yearz = "{}".format(year)
-            fyearz = "{}z".format(year)
-            start = [league, yearz]
-            end = [league, fyearz]
+            start = [league, team, year]
+            end = [league, team, year + 1]
         else:
-            start = [league]
-            end = [league + 'z']
+            start = [league, team]
+            end = [league, team + 'z']
 
-        estropadak = db.get_view_result("estropadak", "all",
+        emaitzak = db.get_view_result("emaitzak", "by_team",
                                 startkey=start,
                                 endkey=end,
-                                include_docs=True,
+                                include_docs=False,
                                 reduce=False)
         result = []
-        alt_names = []
-        if team:
-            teams = TaldeakDAO.get_taldeak(league, year)
-            team_names = [t for t in teams if t['name'] == team]
-            if len(team_names) > 0:
-                alt_names = team_names[0]['alt_names']
-        for estropada in estropadak:
-            estropada = estropadak_transform(estropada)
-            team_estropada = estropada
-            if len(alt_names) > 0 and hasattr(estropada, 'sailkapena'):
-                team_estropada.sailkapena = [
-                    talde_emaitza for talde_emaitza in estropada.sailkapena
-                    if talde_emaitza.talde_izena in alt_names
-                ]
-            if hasattr(estropada, 'sailkapena'):
-                result.append(team_estropada)
+        for emaitza in emaitzak:
+            result.append(db[emaitza['id']])
         return result
 
     @staticmethod
@@ -82,22 +68,31 @@ class EmaitzakDAO:
             return result
         except KeyError:
             return {'error': 'Estropadak not found'}, 404
+    
+    @staticmethod
+    def get_emaitzak(criteria: dict):
+        logging.info(criteria)
+        emaitzak = db.get_query_result(criteria)
+        result = []
+        for emaitza in emaitzak:
+            result.append(emaitza)
+
+        return result
 
 
 @api.route('/', strict_slashes=False)
 class Emaitzak(Resource):
     def get(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('league', type=str, choices=app.config.LEAGUES, case_sensitive=False, help="League abbreviation", required=True)
-        parser.add_argument('year', type=int, help="Year")
-        parser.add_argument('team', type=str, help="Team name")
+        parser.add_argument('criteria', type=str, help="Search criteria")
         args = parser.parse_args()
         try:
-            estropadak = EmaitzakDAO.get_estropadak_by_league_year(
-                args['league'],
-                args['year'],
-                args['team'])
-            return [estropada.format_for_json(estropada)
-                    for estropada in estropadak]
+            criteria = json.loads(args['criteria'])
+        except JSONDecodeError:
+            return {"message": "Bad criteria, please check the query"}, 400
+        try:
+            emaitzak = EmaitzakDAO.get_emaitzak(criteria)
+            return emaitzak
         except Exception:
+            logging.info("Error", exc_info=1)
             return {'error': 'Estropadak not found'}, 404

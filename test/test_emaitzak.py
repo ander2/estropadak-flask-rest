@@ -9,7 +9,25 @@ def estropadakApp():
     return app.test_client()
 
 
-def testEmaitzak(estropadakApp):
-    rv = estropadakApp.get('/emaitzak?league=act&year=2010')
+def testEmaitzakByCriteria(estropadakApp):
+    query = {
+        "type": "emaitza",
+        "liga": "ACT",
+        "estropada_data": {
+            "$and":[{
+                "$gt": "2019-01-01"
+            }, {
+                "$lt": "2019-12-31"
+            }
+            ]
+        },
+        "talde_izen_normalizatua": "Hondarribia"
+    }
+    rv = estropadakApp.get(f'/emaitzak?criteria={json.dumps(query)}')
     emaitzak = json.loads(rv.data.decode('utf-8'))
     assert len(emaitzak) == 20
+
+
+def testEmaitzakByBadCriteria(estropadakApp):
+    rv = estropadakApp.get(f'/emaitzak?criteria={"foo"}')
+    assert rv.status_code == 400
