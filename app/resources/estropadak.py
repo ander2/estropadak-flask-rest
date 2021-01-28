@@ -46,21 +46,15 @@ class EstropadakDAO:
                                             raw_result=True,
                                             startkey=start,
                                             endkey=end,
-                                            include_docs=False,
+                                            include_docs=True,
                                             reduce=False,
                                             skip=count*page,
                                             limit=count)
             result = []
-            for estropada in estropadak['rows']:
+            for row in estropadak['rows']:
                 puntuagarria = True
-                if db[estropada['id']].get('puntuagarria', True) is False:
-                    puntuagarria = False
-                result.append({
-                    'id': estropada['id'],
-                    'data': estropada['key'][1],
-                    'izena': estropada['key'][2],
-                    'puntuagarria': puntuagarria
-                })
+                estropada = estropadak_transform(row['doc'])
+                result.append(estropada.format_for_json(estropada))
             return result
         except KeyError:
             return {'error': 'Estropadak not found'}, 404
