@@ -70,13 +70,15 @@ class EmaitzakDAO:
             return {'error': 'Estropadak not found'}, 404
     
     @staticmethod
-    def get_emaitzak(criteria: dict):
+    def get_emaitzak(criteria: dict, page: int, count: int):
         logging.info(criteria)
+        start = page * count
+        end = start + count
         emaitzak = db.get_query_result(criteria)
-        result = []
-        for emaitza in emaitzak:
-            result.append(emaitza)
-
+        try:
+            result = emaitzak[start:end]
+        except IndexError:
+            return {'error': 'Bad pagination'}, 400
         return result
 
 
@@ -85,13 +87,15 @@ class Emaitzak(Resource):
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument('criteria', type=str, help="Search criteria")
+        parser.add_argument('page', type=int, help="Page number", default=0)
+        parser.add_argument('count', type=int, help="Elements per page", default=app.config.PAGE_SIZE)
         args = parser.parse_args()
         try:
             criteria = json.loads(args['criteria'])
         except JSONDecodeError:
             return {"message": "Bad criteria, please check the query"}, 400
         try:
-            emaitzak = EmaitzakDAO.get_emaitzak(criteria)
+            emaitzak = EmaitzakDAO.get_emaitzak(criteria, args['page'], args['count'])
             return emaitzak
         except Exception:
             logging.info("Error", exc_info=1)
