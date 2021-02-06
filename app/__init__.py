@@ -1,7 +1,10 @@
 import logging
 from flask import Flask
 from flask_restx import Api
+from flask_jwt import JWT
 
+from app.auth import identity, authenticate
+from app.config import JWT_SECRET_KEY
 from app.resources.active_year import api as active_year_api
 from app.resources.urteak import api as urteak_api
 from app.resources.estropadak import api as estropadak_api
@@ -14,8 +17,13 @@ from app.resources.estatistikak import api as estatistikak_api
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = JWT_SECRET_KEY
+app.config['PROPAGATE_EXCEPTIONS'] = True
+jwt = JWT(app, authenticate, identity)
+
 api = Api(app, version='1.0', title='Estropadak API',
           description='Estropadak API')
+
 
 api.add_namespace(active_year_api)
 api.add_namespace(urteak_api)

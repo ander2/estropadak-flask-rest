@@ -19,6 +19,7 @@ if 'DBUSER' in os.environ:
 if 'DBPASS' in os.environ:
     config['DBPASS'] = os.environ['DBPASS']
 
+JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
 MIN_YEAR = 2002
 LEAGUES = ['ACT', 'ARC1', 'ARC2', 'EUSKOTREN', 'ETE', 'GBL', 'TXAPELKETAK']
 PAGE_SIZE=50
