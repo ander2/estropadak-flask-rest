@@ -50,6 +50,7 @@ def testEmaitzakByCriteriaPagination(estropadakApp):
     emaitzak = json.loads(rv.data.decode('utf-8'))
     assert len(emaitzak) == 5
 
+@pytest.mark.skip('Test in wrong branch')
 def testEmaitzakByCriteriaBadPagination(estropadakApp):
     query = {
         "type": "emaitza",
