@@ -25,7 +25,8 @@ def testEmaitzakByCriteria(estropadakApp):
     }
     rv = estropadakApp.get(f'/emaitzak?criteria={json.dumps(query)}')
     emaitzak = json.loads(rv.data.decode('utf-8'))
-    assert len(emaitzak) == 20
+    assert len(emaitzak['docs']) == 20
+    assert emaitzak['total'] == 20
 
 
 def testEmaitzakByBadCriteria(estropadakApp):
@@ -48,7 +49,8 @@ def testEmaitzakByCriteriaPagination(estropadakApp):
     }
     rv = estropadakApp.get(f'/emaitzak?criteria={json.dumps(query)}&page=0&count=5')
     emaitzak = json.loads(rv.data.decode('utf-8'))
-    assert len(emaitzak) == 5
+    assert emaitzak['total'] == 20
+    assert len(emaitzak['docs']) == 5
 
 @pytest.mark.skip('Test in wrong branch')
 def testEmaitzakByCriteriaBadPagination(estropadakApp):
