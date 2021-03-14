@@ -160,3 +160,39 @@ class TestEstropadak():
         assert rv.status_code == 201
         rv = estropadakApp.delete('/estropadak/2021-06-02_ARC1_Estropada-test3', headers=[('Authorization', f'JWT {token}')])
         assert rv.status_code == 200
+
+    def testEstropadaCreationWithMissingDataInModel(self, estropadakApp, credentials):
+        rv = estropadakApp.post('/auth', json=credentials)
+        token = rv.json['access_token']
+        rv = estropadakApp.post('/estropadak', json={
+            "izena": "Estropada test5",
+            "data": "2021-06-10 17:00",
+            "sailkapena": []
+        }, headers=[('Authorization', f'JWT {token}')])
+        assert rv.status_code == 400
+
+        rv = estropadakApp.post('/estropadak', json={
+            "izena": "Estropada test5",
+            "liga": "ARC1",
+            "sailkapena": []
+        }, headers=[('Authorization', f'JWT {token}')])
+        assert rv.status_code == 400
+
+        rv = estropadakApp.post('/estropadak', json={
+            "izena": "",
+            "data": "2021-06-10 17:00",
+            "liga": "ARC1",
+            "sailkapena": []
+        }, headers=[('Authorization', f'JWT {token}')])
+        assert rv.status_code == 400
+
+    def testEstropadaCreationWithUnsupportedLiga(self, estropadakApp, credentials):
+        rv = estropadakApp.post('/auth', json=credentials)
+        token = rv.json['access_token']
+        rv = estropadakApp.post('/estropadak', json={
+            "izena": "Estropada test5",
+            "liga": "ACTT",
+            "data": "2021-06-10 17:00",
+            "sailkapena": []
+        }, headers=[('Authorization', f'JWT {token}')])
+        assert rv.status_code == 400

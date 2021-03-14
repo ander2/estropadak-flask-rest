@@ -1,3 +1,4 @@
+import enum
 import logging
 import app.config
 import datetime
@@ -11,10 +12,10 @@ from .utils import estropadak_transform, league_year_parser
 api = Namespace('estropadak', description='')
 
 estropada_model = api.model('Estropada', {
-    'izena': fields.String,
-    'data': fields.DateTime,
-    'liga': fields.String,
-    'sailkapena': fields.Arbitrary
+    'izena': fields.String(required=True, min_length=8),
+    'data': fields.DateTime(required=True),
+    'liga': fields.String(required=True, enum=app.config.LEAGUES),
+    'sailkapena': fields.List(fields.Arbitrary)
 })
 
 
@@ -116,6 +117,7 @@ class EstropadakLogic():
             pass
         return EstropadakDAO.update_estropada_into_db(estropada_id, estropada)
 
+
 @api.route('/', strict_slashes=False)
 class Estropadak(Resource):
     @api.expect(league_year_parser, validate=True)
@@ -131,7 +133,7 @@ class Estropadak(Resource):
         return estropadak
 
     @jwt_required()
-    @api.expect(estropada_model)
+    @api.expect(estropada_model, validate=True)
     @api.response(201, 'Estropada created')
     @api.response(400, 'Validation Error')
     def post(self):
@@ -141,7 +143,6 @@ class Estropadak(Resource):
             return {}, 201 # , "Estropada created"
         else:
             return {}, 400 # , "Cannot create estropada"
-
 
 
 @api.route('/<string:estropada_id>')
@@ -154,7 +155,7 @@ class Estropada(Resource):
             return estropada.format_for_json(estropada)
 
     @jwt_required()
-    @api.expect(estropada_model)
+    @api.expect(estropada_model, validate=True)
     def put(self, estropada_id):
         data = api.payload
         EstropadakLogic.update_estropada(estropada_id, data)
