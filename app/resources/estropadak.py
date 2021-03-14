@@ -1,5 +1,5 @@
-import enum
 import logging
+
 import app.config
 import datetime
 
@@ -15,7 +15,10 @@ estropada_model = api.model('Estropada', {
     'izena': fields.String(required=True, min_length=8),
     'data': fields.DateTime(required=True),
     'liga': fields.String(required=True, enum=app.config.LEAGUES),
-    'sailkapena': fields.List(fields.Arbitrary)
+    'sailkapena': fields.List(fields.Arbitrary),
+    'urla': fields.String(min_length=8),
+    'puntuagarria': fields.Boolean(required=False, default=True),
+    'kategoriak': fields.List(fields.String(), required=False)
 })
 
 
@@ -140,9 +143,9 @@ class Estropadak(Resource):
         data = api.payload
         doc_created = EstropadakLogic.create_estropada(data)
         if doc_created:
-            return {}, 201 # , "Estropada created"
+            return {}, 201  # , "Estropada created"
         else:
-            return {}, 400 # , "Cannot create estropada"
+            return {}, 400  # , "Cannot create estropada"
 
 
 @api.route('/<string:estropada_id>')

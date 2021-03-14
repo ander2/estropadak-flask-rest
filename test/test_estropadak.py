@@ -1,16 +1,14 @@
 import datetime
 import json
-import logging
 import pytest
 from app import app
 from app.db_connection import db
-from cloudant.document import Document
 
 
 @pytest.fixture()
 def clean_up():
     print("setup")
-    yield 
+    yield
     print("deleting")
     docs = [
         '2021-06-01_ACT_Estropada-test',
@@ -134,7 +132,7 @@ class TestEstropadak():
         recovered_doc['data'] == "2021-06-01 17:30"
         recovered_doc['liga'] == "arc1"
         recovered_doc['sailkapena'] == []
-    
+
     def testEstropadaDeletionWithoutCredentials(self, estropadakApp, credentials, clean_up):
         rv = estropadakApp.post('/auth', json=credentials)
         token = rv.json['access_token']
