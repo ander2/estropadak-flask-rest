@@ -1,5 +1,6 @@
 import logging
 import app.config
+import datetime
 
 from estropadakparser.estropada.estropada import Estropada, TaldeEmaitza
 from flask_restx import reqparse
@@ -23,16 +24,8 @@ def estropadak_transform(row):
     else:
         document = row
     row = normalize_id(row)
-    izena = document['izena']
-    if 'sailkapena' not in document:
-        document['sailkapena'] = []
-    sailkapena = document['sailkapena']
-    del(document['izena'])
-    del(document['sailkapena'])
+    izena = document.pop('izena')
     estropada = Estropada(izena, **document)
-    logging.info(estropada)
-    for sailk in sailkapena:
-        estropada.taldeak_add(TaldeEmaitza(**sailk))
     return estropada
 
 league_year_parser = reqparse.RequestParser()
@@ -77,3 +70,14 @@ def get_team_color(team: str):
         return colors[team]
     except KeyError:
         return 'blue'
+ 
+
+def create_id(estropada, emaitza, taldeak):
+    data = datetime.datetime.strptime(estropada['data'], '%Y-%m-%d %H:%M')
+    if emaitza is not None:
+        taldea = get_talde_izena(emaitza["talde_izena"])
+        id = f'{data.strftime("%Y-%m-%d")}_{estropada["liga"]}_{taldea}'
+    else:
+        izena = estropada['izena'].replace(' ', '-')
+        id = f'{data.strftime("%Y-%m-%d")}_{estropada["liga"]}_{izena}'
+    return id

@@ -8,10 +8,6 @@ from app import app
 def estropadakApp():
     return app.test_client()
 
-@pytest.fixture()
-def credentials():
-    return dict(username='test_api', password='test_api_pass')
-
 def testYears(estropadakApp):
     rv = estropadakApp.get('/years')
     logging.info(rv)

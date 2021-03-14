@@ -1,7 +1,31 @@
 import datetime
 import json
+import logging
 import pytest
 from app import app
+from app.db_connection import db
+from cloudant.document import Document
+
+
+@pytest.fixture()
+def clean_up():
+    print("setup")
+    yield 
+    print("deleting")
+    docs = [
+        '2021-06-01_ACT_Estropada-test',
+        '2021-06-01_ARC1_Estropada-test2',
+        '2021-06-02_ARC1_Estropada-test4',
+    ]
+    for doc_id in docs:
+        try:
+            doc = db[doc_id]
+            if doc.exists():
+                # with Document(db, doc_id) as doc:
+                doc.fetch()
+                doc.delete()
+        except KeyError:
+            pass
 
 
 class TestEstropadak():
@@ -58,3 +82,81 @@ class TestEstropadak():
         rv = estropadakApp.get('/estropadak/fuck')
         # estropada = json.loads(rv.data.decode('utf-8'))
         assert rv.status_code == 404
+
+    def testEstropadaCreationWithCredentials(self, estropadakApp, credentials):
+        rv = estropadakApp.post('/auth', json=credentials)
+        token = rv.json['access_token']
+        rv = estropadakApp.post('/estropadak', json={
+            "izena": "Estropada test",
+            "data": "2021-06-01 17:00",
+            "liga": "ACT",
+            "sailkapena": []
+        }, headers=[('Authorization', f'JWT {token}')])
+        assert rv.status_code == 201
+
+    def testEstropadaCreationWithoutCredentials(self, estropadakApp, credentials, clean_up):
+        rv = estropadakApp.post('/estropadak', json={
+            "izena": "Estropada test",
+            "data": "2021-06-01 17:00",
+            "liga": "ACT",
+            "sailkapena": []
+        })
+        assert rv.status_code == 401
+
+    def testEstropadaModificationWithoutCredentials(self, estropadakApp, credentials):
+        rv = estropadakApp.put('/estropadak/2021_act_estropada', json={
+            "izena": "Estropada test",
+            "data": "2021-06-01 17:00",
+            "liga": "ACT",
+            "sailkapena": []
+        })
+        assert rv.status_code == 401
+
+    def testEstropadaModificationWithCredentials(self, estropadakApp, credentials, clean_up):
+        rv = estropadakApp.post('/auth', json=credentials)
+        token = rv.json['access_token']
+        rv = estropadakApp.post('/estropadak', json={
+            "izena": "Estropada test2",
+            "data": "2021-06-01 17:00",
+            "liga": "ARC1",
+            "sailkapena": []
+        }, headers=[('Authorization', f'JWT {token}')])
+        rv = estropadakApp.put('/estropadak/2021-06-01_ARC1_Estropada-test2', json={
+            "izena": "Estropada test2",
+            "data": "2021-06-01 17:30",
+            "liga": "ARC1",
+            "sailkapena": []
+        }, headers=[('Authorization', f'JWT {token}')])
+        assert rv.status_code == 200
+        rv = estropadakApp.get('/estropadak/2021-06-01_ARC1_Estropada-test2')
+        recovered_doc = rv.get_json()
+        recovered_doc['izena'] == "Estropada test2"
+        recovered_doc['data'] == "2021-06-01 17:30"
+        recovered_doc['liga'] == "arc1"
+        recovered_doc['sailkapena'] == []
+    
+    def testEstropadaDeletionWithoutCredentials(self, estropadakApp, credentials, clean_up):
+        rv = estropadakApp.post('/auth', json=credentials)
+        token = rv.json['access_token']
+        rv = estropadakApp.post('/estropadak', json={
+            "izena": "Estropada test4",
+            "data": "2021-06-02 17:00",
+            "liga": "ARC1",
+            "sailkapena": []
+        }, headers=[('Authorization', f'JWT {token}')])
+        assert rv.status_code == 201
+        rv = estropadakApp.delete('/estropadak/2021-06-02_ARC1_Estropada-test4')
+        assert rv.status_code == 401
+
+    def testEstropadaDeletionWithCredentials(self, estropadakApp, credentials):
+        rv = estropadakApp.post('/auth', json=credentials)
+        token = rv.json['access_token']
+        rv = estropadakApp.post('/estropadak', json={
+            "izena": "Estropada test3",
+            "data": "2021-06-02 17:00",
+            "liga": "ARC1",
+            "sailkapena": []
+        }, headers=[('Authorization', f'JWT {token}')])
+        assert rv.status_code == 201
+        rv = estropadakApp.delete('/estropadak/2021-06-02_ARC1_Estropada-test3', headers=[('Authorization', f'JWT {token}')])
+        assert rv.status_code == 200

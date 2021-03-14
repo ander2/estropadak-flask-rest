@@ -1,11 +1,21 @@
 import logging
 import app.config
+import datetime
 
-from flask_restx import Namespace, Resource
+from flask_restx import Namespace, Resource, fields
+from flask_jwt import jwt_required
 from app.db_connection import db
 from .utils import estropadak_transform, league_year_parser
 
+
 api = Namespace('estropadak', description='')
+
+estropada_model = api.model('Estropada', {
+    'izena': fields.String,
+    'data': fields.DateTime,
+    'liga': fields.String,
+    'sailkapena': fields.Arbitrary
+})
 
 
 class EstropadakDAO:
@@ -59,6 +69,52 @@ class EstropadakDAO:
         except KeyError:
             return {'error': 'Estropadak not found'}, 404
 
+    @staticmethod
+    def insert_estropada_into_db(estropada):
+        data = datetime.datetime.strptime(estropada['data'], '%Y-%m-%d %H:%M')
+        izena = estropada['izena'].replace(' ', '-')
+        estropada['_id'] = f'{data.strftime("%Y-%m-%d")}_{estropada["liga"]}_{izena}'
+
+        logging.info(estropada)
+        document = db.create_document(estropada)
+        return document.exists()
+
+    @staticmethod
+    def update_estropada_into_db(estropada_id, estropada):
+        doc = db[estropada_id]
+        doc['izena'] = estropada['izena']
+        doc['data'] = estropada['data']
+        doc['liga'] = estropada['liga']
+        doc['sailkapena'] = estropada['sailkapena']
+        doc.save()
+
+    @staticmethod
+    def delete_estropada_from_db(estropada_id):
+        doc = db[estropada_id]
+        if doc.exists():
+            doc.fetch()
+            doc.delete()
+
+
+class EstropadakLogic():
+
+    @staticmethod
+    def create_estropada(estropada):
+        if estropada.get('type', 'estropada') != 'estropada':
+            estropada['type'] = 'estropada'
+        if estropada.get('sailkapena', []):
+            # todo implement EmaitzaLogic.create_emaitza
+            pass
+        return EstropadakDAO.insert_estropada_into_db(estropada)
+
+    @staticmethod
+    def update_estropada(estropada_id, estropada):
+        if estropada.get('type', 'estropada') != 'estropada':
+            estropada['type'] = 'estropada'
+        if estropada.get('sailkapena', []):
+            # todo implement EmaitzaLogic.create_emaitza
+            pass
+        return EstropadakDAO.update_estropada_into_db(estropada_id, estropada)
 
 @api.route('/', strict_slashes=False)
 class Estropadak(Resource):
@@ -74,6 +130,19 @@ class Estropadak(Resource):
             args['count'])
         return estropadak
 
+    @jwt_required()
+    @api.expect(estropada_model)
+    @api.response(201, 'Estropada created')
+    @api.response(400, 'Validation Error')
+    def post(self):
+        data = api.payload
+        doc_created = EstropadakLogic.create_estropada(data)
+        if doc_created:
+            return {}, 201 # , "Estropada created"
+        else:
+            return {}, 400 # , "Cannot create estropada"
+
+
 
 @api.route('/<string:estropada_id>')
 class Estropada(Resource):
@@ -83,3 +152,13 @@ class Estropada(Resource):
             return "Estropada not found", 404
         else:
             return estropada.format_for_json(estropada)
+
+    @jwt_required()
+    @api.expect(estropada_model)
+    def put(self, estropada_id):
+        data = api.payload
+        EstropadakLogic.update_estropada(estropada_id, data)
+
+    @jwt_required()
+    def delete(self, estropada_id):
+        EstropadakDAO.delete_estropada_from_db(estropada_id)
