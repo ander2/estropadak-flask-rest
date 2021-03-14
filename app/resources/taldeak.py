@@ -80,6 +80,15 @@ class TaldeakDAO:
             logging.info("Not found", exc_info=1)
         return taldeak
 
+    @staticmethod
+    def get_talde_izen_normalizatua(taldea):
+        talde_izenak = db['talde_izenak']
+        try:
+            talde_izena = talde_izenak[taldea]
+        except KeyError:
+            talde_izena = talde_izenak[taldea.title()]
+        return talde_izena
+
 
 @api.route('/', strict_slashes=False)
 class Taldeak(Resource):
