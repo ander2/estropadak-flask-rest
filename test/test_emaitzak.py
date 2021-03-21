@@ -27,12 +27,13 @@ def clean_up():
         except KeyError:
             pass
 
+
 def testEmaitzakByCriteria(estropadakApp):
     query = {
         "type": "emaitza",
         "liga": "ACT",
         "estropada_data": {
-            "$and":[{
+            "$and": [{
                 "$gt": "2019-01-01"
             }, {
                 "$lt": "2019-12-31"
@@ -51,12 +52,13 @@ def testEmaitzakByBadCriteria(estropadakApp):
     rv = estropadakApp.get(f'/emaitzak?criteria={"foo"}')
     assert rv.status_code == 400
 
+
 def testEmaitzakByCriteriaPagination(estropadakApp):
     query = {
         "type": "emaitza",
         "liga": "ACT",
         "estropada_data": {
-            "$and":[{
+            "$and": [{
                 "$gt": "2019-01-01"
             }, {
                 "$lt": "2019-12-31"
@@ -77,7 +79,7 @@ def testEmaitzakByCriteriaBadPagination(estropadakApp):
         "type": "emaitza",
         "liga": "ACT",
         "estropada_data": {
-            "$and":[{
+            "$and": [{
                 "$gt": "2019-01-01"
             }, {
                 "$lt": "2019-12-31"
@@ -105,7 +107,7 @@ def testEmaitzakCreationWithoutCredentials(estropadakApp):
         "puntuazioa": 7,
         "kalea": 5,
         "estropada_izena": "III. FEGEMU BANDERA",
-        "estropada_data": "2019-06-18 12:00", # Fake date, just to not conflict
+        "estropada_data": "2019-06-18 12:00",  # Fake date, just to not conflict
         "liga": "ARC1",
         "estropada_id": "37a4adac975ce9ab29decb228900718b",
         "talde_izen_normalizatua": "San Juan"
@@ -131,7 +133,7 @@ def testEmaitzakCreationWithCredentials(estropadakApp, credentials, clean_up):
         "puntuazioa": 7,
         "kalea": 5,
         "estropada_izena": "III. FEGEMU BANDERA",
-        "estropada_data": "2019-06-18 12:00", # Fake date, just to not conflict
+        "estropada_data": "2019-06-18 12:00",  # Fake date, just to not conflict
         "liga": "ARC1",
         "estropada_id": "37a4adac975ce9ab29decb228900718b",
         "type": "emaitza",
@@ -163,7 +165,7 @@ def testEmaitzakCreationWithInvalidData(estropadakApp, credentials, clean_up):
         "puntuazioa": 7,
         "kalea": 5,
         "estropada_izena": "III. FEGEMU BANDERA",
-        "estropada_data": "2019-06-18 12:00", # Fake date, just to not conflict
+        "estropada_data": "2019-06-18 12:00",  # Fake date, just to not conflict
         "liga": "ARC1",
         "estropada_id": "37a4adac975ce9ab29decb228900718b",
         "type": "emaitza"
@@ -192,7 +194,7 @@ def testEmaitzakModificationWithoutCredentials(estropadakApp, credentials, clean
         "puntuazioa": 7,
         "kalea": 5,
         "estropada_izena": "III. FEGEMU BANDERA",
-        "estropada_data": "2019-06-18 12:00", # Fake date, just to not conflict
+        "estropada_data": "2019-06-18 12:00",   # Fake date, just to not conflict
         "liga": "ARC1",
         "estropada_id": "37a4adac975ce9ab29decb228900718b",
         "type": "emaitza"
@@ -205,7 +207,51 @@ def testEmaitzakModificationWithoutCredentials(estropadakApp, credentials, clean
 
     emaitza_data['posizioa'] = 7
     rv = estropadakApp.put(
+        '/emaitzak/2019-06-18_ARC1_Donostiarra',
+        json=emaitza_data)
+    assert rv.status_code == 401
+
+
+def testEmaitzakModificationWithCredentials(estropadakApp, credentials, clean_up):
+    rv = estropadakApp.post('/auth', json=credentials)
+    token = rv.json['access_token']
+    emaitza_data = {
+        "talde_izena": "Donostiarra",
+        "tanda_postua": 2,
+        "tanda": 2,
+        "denbora": "20:30,28",
+        "posizioa": 6,
+        "ziabogak": [
+            "2:16",
+            "7:36",
+            "12:35"
+        ],
+        "puntuazioa": 7,
+        "kalea": 5,
+        "estropada_izena": "III. FEGEM BANDERA",
+        "estropada_data": "2019-06-18 12:00",  # Fake date, just to not conflict
+        "liga": "ARC1",
+        "estropada_id": "37a4adac975ce9ab29decb228900718b",
+        "type": "emaitza"
+    }
+    rv = estropadakApp.post(
         '/emaitzak',
         json=emaitza_data,
         headers=[('Authorization', f'JWT {token}')])
-    assert rv.status_code == 401
+    assert rv.status_code == 201
+
+    emaitza_data['posizioa'] = 7
+    emaitza_data['kalea'] = 3
+
+    rv = estropadakApp.put(
+        '/emaitzak/2019-06-18_ARC1_Donostiarra',
+        json=emaitza_data,
+        headers=[('Authorization', f'JWT {token}')])
+    assert rv.status_code == 200
+
+    rv = estropadakApp.get(
+        '/emaitzak/2019-06-18_ARC1_Donostiarra',
+        json=emaitza_data)
+    assert rv.status_code == 200
+    assert rv.get_json()['posizioa'] == 7
+    assert rv.get_json()['kalea'] == 3

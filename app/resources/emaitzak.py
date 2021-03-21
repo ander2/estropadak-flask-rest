@@ -64,10 +64,10 @@ class EmaitzakDAO:
             end = [league, team + 'z']
 
         emaitzak = db.get_view_result("emaitzak", "by_team",
-                                startkey=start,
-                                endkey=end,
-                                include_docs=False,
-                                reduce=False)
+                                      startkey=start,
+                                      endkey=end,
+                                      include_docs=False,
+                                      reduce=False)
         result = []
         for emaitza in emaitzak:
             result.append(db[emaitza['id']])
@@ -94,7 +94,7 @@ class EmaitzakDAO:
             return result
         except KeyError:
             return {'error': 'Estropadak not found'}, 404
-    
+
     @staticmethod
     def get_emaitzak(criteria: dict, page: int, count: int):
         start = page * count
@@ -104,20 +104,41 @@ class EmaitzakDAO:
         emaitzak = db.get_query_result(criteria)
         try:
             for emaitza in emaitzak:
-                total = total + 1 
+                total = total + 1
             emaitzak = db.get_query_result(criteria)
             docs = emaitzak[start:end]
         except IndexError:
             return {'error': 'Bad pagination'}, 400
         return (docs, total,)
 
+    @staticmethod
     def insert_emaitza_into_db(emaitza):
         data = datetime.datetime.strptime(emaitza['estropada_data'], '%Y-%m-%d %H:%M')
-        izena = emaitza['talde_izen_normalizatua'].replace(' ', '-')
+        talde_izen_normalizatua = TaldeakDAO.get_talde_izen_normalizatua(emaitza['talde_izena'])
+        izena = talde_izen_normalizatua.replace(' ', '-')
         emaitza['_id'] = f'{data.strftime("%Y-%m-%d")}_{emaitza["liga"]}_{izena}'
 
         document = db.create_document(emaitza)
         return document.exists()
+
+    @staticmethod
+    def update_emaitza_into_db(emaitza_id, emaitza):
+        document = db[emaitza_id]
+        if document.exists():
+            document.update(emaitza)
+            document.save()
+            return document.exists()
+        else:
+            return None
+
+
+class EmaitzakLogic:
+    @staticmethod
+    def update_emaitza(emaitza_id, emaitza):
+        emaitza['type'] = 'emaitza'
+        talde_izen_normalizatua = TaldeakDAO.get_talde_izen_normalizatua(emaitza['talde_izena'])
+        emaitza['talde_izen_normalizatua'] = talde_izen_normalizatua
+        return EmaitzakDAO.update_emaitza_into_db(emaitza_id, emaitza)
 
 
 @api.route('/', strict_slashes=False)
@@ -161,3 +182,15 @@ class Emaitza(Resource):
         else:
             return {}, 404
 
+    @jwt_required()
+    @api.expect(emaitza_model, validate=True)
+    def put(self, emaitza_id):
+
+        data = api.payload
+
+        emaitza = EmaitzakLogic.update_emaitza(emaitza_id, data)
+
+        if emaitza:
+            return emaitza
+        else:
+            return {}, 404
