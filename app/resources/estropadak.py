@@ -90,6 +90,7 @@ class EstropadakDAO:
         doc['data'] = estropada['data']
         doc['liga'] = estropada['liga']
         doc['sailkapena'] = estropada['sailkapena']
+        doc['type'] = estropada['type']
         doc.save()
 
     @staticmethod
@@ -104,7 +105,7 @@ class EstropadakLogic():
 
     @staticmethod
     def create_estropada(estropada):
-        if estropada.get('type', 'estropada') != 'estropada':
+        if estropada.get('type', None) != 'estropada':
             estropada['type'] = 'estropada'
         if estropada.get('sailkapena', []):
             # todo implement EmaitzaLogic.create_emaitza
@@ -113,7 +114,7 @@ class EstropadakLogic():
 
     @staticmethod
     def update_estropada(estropada_id, estropada):
-        if estropada.get('type', 'estropada') != 'estropada':
+        if estropada.get('type', None) != 'estropada':
             estropada['type'] = 'estropada'
         if estropada.get('sailkapena', []):
             # todo implement EmaitzaLogic.create_emaitza
