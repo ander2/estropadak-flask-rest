@@ -1,21 +1,37 @@
 import logging
 
+from attr import attributes
+
 import app.config
 import datetime
 
 from flask_restx import Namespace, Resource, fields
 from flask_jwt import jwt_required
-from app.db_connection import db
-from .utils import estropadak_transform, league_year_parser
+from app.db_connection import db, get_db_connection
+from .utils import league_year_parser
 
 
 api = Namespace('estropadak', description='')
 
+emaitza_model = api.model('Emaitza estropadan', {
+    'talde_izena': fields.String(required=True),
+    'ziabogak': fields.List(fields.String, required=True),
+    'kalea': fields.Integer(required=True),
+    'tanda': fields.Integer(required=True),
+    'tanda_postua': fields.Integer(required=True),
+    'denbora': fields.String(),
+    'posizioa': fields.Integer(),
+    'puntuazioa': fields.Integer(),
+    'kategoria': fields.String(),
+})
+
 estropada_model = api.model('Estropada', {
+    'id': fields.String(required=False, attribute="_id"),
     'izena': fields.String(required=True, min_length=8),
     'data': fields.DateTime(required=True),
+    'lekua': fields.String(required=False),
     'liga': fields.String(required=True, enum=app.config.LEAGUES),
-    'sailkapena': fields.List(fields.Arbitrary),
+    'sailkapena': fields.List(fields.Nested(emaitza_model)),
     'urla': fields.String(min_length=8),
     'puntuagarria': fields.Boolean(required=False, default=True),
     'kategoriak': fields.List(fields.String(), required=False)
@@ -25,15 +41,18 @@ estropada_model = api.model('Estropada', {
 class EstropadakDAO:
     @staticmethod
     def get_estropada_by_id(id):
-        try:
-            estropada = estropadak_transform(db[id])
-        except TypeError:
-            logging.error("Not found", exc_info=1)
-            estropada = None
-        except KeyError:
-            logging.error("Not found", exc_info=1)
-            estropada = None
-        return estropada
+        
+        with get_db_connection() as database:
+            try:
+                estropada = database[id]
+                estropada['data'] = estropada['data'].replace(' ', 'T')
+            except TypeError:
+                logging.error("Not found", exc_info=1)
+                estropada = None
+            except KeyError:
+                logging.error("Not found", exc_info=1)
+                estropada = None
+            return estropada
 
     @staticmethod
     def get_estropadak_by_league_year(league, year, page=0, count=app.config.PAGE_SIZE):
@@ -55,23 +74,24 @@ class EstropadakDAO:
         else:
             end = ["{}z".format(league)]
 
-        try:
-            estropadak = db.get_view_result("estropadak", "all",
-                                            raw_result=True,
-                                            startkey=start,
-                                            endkey=end,
-                                            include_docs=True,
-                                            reduce=False,
-                                            skip=count*page,
-                                            limit=count)
-            result = []
-            for row in estropadak['rows']:
-                puntuagarria = True
-                estropada = estropadak_transform(row['doc'])
-                result.append(estropada.format_for_json(estropada))
-            return result
-        except KeyError:
-            return {'error': 'Estropadak not found'}, 404
+        with get_db_connection() as database:
+            try:
+                estropadak = database.get_view_result("estropadak", "all",
+                                                      raw_result=True,
+                                                      startkey=start,
+                                                      endkey=end,
+                                                      include_docs=True,
+                                                      reduce=False,
+                                                      skip=count*page,
+                                                      limit=count)
+                result = []
+                for row in estropadak['rows']:
+                    estropada = row['doc']
+                    estropada['data'] = estropada['data'].replace(' ', 'T')
+                    result.append(estropada)
+                return result
+            except KeyError:
+                return {'error': 'Estropadak not found'}, 404
 
     @staticmethod
     def insert_estropada_into_db(estropada):
@@ -80,25 +100,28 @@ class EstropadakDAO:
         estropada['_id'] = f'{data.strftime("%Y-%m-%d")}_{estropada["liga"]}_{izena}'
 
         logging.info(estropada)
-        document = db.create_document(estropada)
-        return document.exists()
+        with get_db_connection() as database:
+            document = database.create_document(estropada)
+            return document.exists()
 
     @staticmethod
     def update_estropada_into_db(estropada_id, estropada):
-        doc = db[estropada_id]
-        doc['izena'] = estropada['izena']
-        doc['data'] = estropada['data']
-        doc['liga'] = estropada['liga']
-        doc['sailkapena'] = estropada['sailkapena']
-        doc['type'] = estropada['type']
-        doc.save()
+        with get_db_connection() as database:
+            doc = database[estropada_id]
+            doc['izena'] = estropada['izena']
+            doc['data'] = estropada['data']
+            doc['liga'] = estropada['liga']
+            doc['sailkapena'] = estropada['sailkapena']
+            doc['type'] = estropada['type']
+            doc.save()
 
     @staticmethod
     def delete_estropada_from_db(estropada_id):
-        doc = db[estropada_id]
-        if doc.exists():
-            doc.fetch()
-            doc.delete()
+        with get_db_connection() as database:
+            doc = database[estropada_id]
+            if doc.exists():
+                doc.fetch()
+                doc.delete()
 
 
 class EstropadakLogic():
@@ -124,6 +147,7 @@ class EstropadakLogic():
 
 @api.route('/', strict_slashes=False)
 class Estropadak(Resource):
+    @api.marshal_with(estropada_model)
     @api.expect(league_year_parser, validate=True)
     def get(self):
         args = league_year_parser.parse_args()
@@ -151,12 +175,13 @@ class Estropadak(Resource):
 
 @api.route('/<string:estropada_id>')
 class Estropada(Resource):
+    @api.marshal_with(estropada_model)
     def get(self, estropada_id):
         estropada = EstropadakDAO.get_estropada_by_id(estropada_id)
         if estropada is None:
             return "Estropada not found", 404
         else:
-            return estropada.format_for_json(estropada)
+            return estropada
 
     @jwt_required()
     @api.expect(estropada_model, validate=True)

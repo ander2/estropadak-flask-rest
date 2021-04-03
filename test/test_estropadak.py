@@ -46,6 +46,13 @@ class TestEstropadak():
         rv = estropadakApp.get('/estropadak?league=act&year=2010', )
         estropadak = json.loads(rv.data.decode('utf-8'))
         assert len(estropadak) == 20
+        assert estropadak[0]['id'] == "2010-07-03_ACT_I-Bandera-SEAT---G.P.-Villa-de-Bilbao"
+        assert estropadak[0]["izena"] == "I Bandera SEAT - G.P. Villa de Bilbao"
+        assert estropadak[0]["data"] == "2010-07-03T17:00:00"
+        assert estropadak[0]["liga"] == "ACT"
+        assert estropadak[0]["urla"] == "http://www.euskolabelliga.com/resultados/ver.php?id=eu&r=1269258408"
+        assert estropadak[0]["lekua"] == "Bilbao Bizkaia"
+        assert estropadak[0]["kategoriak"] == []
 
     def testEstropadakListWithoutResults(self, estropadakApp):
         rv = estropadakApp.get('/estropadak?league=act&year=1900')
