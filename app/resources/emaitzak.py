@@ -32,18 +32,6 @@ emaitza_model = api.model('Emaitza', {
 class EmaitzakDAO:
 
     @staticmethod
-    def get_estropada_by_id(id):
-        try:
-            estropada = estropadak_transform(db[id])
-        except TypeError:
-            logging.debug("Not found", exc_info=1)
-            estropada = None
-        except KeyError:
-            logging.debug("Not found", exc_info=1)
-            estropada = None
-        return estropada
-
-    @staticmethod
     def get_emaitza_by_id(id):
         try:
             emaitza = db[id]
