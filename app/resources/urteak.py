@@ -21,13 +21,13 @@ urtea_model = api.model('Urtea', {
 
 @api.route('/', strict_slashes=False)
 class Years(Resource):
-    @api.marshal_with(urtea_model)
+    @api.marshal_with(urtea_model, as_list=True)
     def get(self):
         args = parser.parse_args()
         doc = db['years']
         result = []
         for k, v in doc.items():
-            if k in app.config.LEAGUES:
+            if k.upper() in app.config.LEAGUES or k == 'euskotren':
                 if args['historial'] and inputs.boolean(args['historial']):
                     if args['year'] > 2009:
                         result.append({

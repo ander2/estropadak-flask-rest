@@ -21,5 +21,5 @@ if 'DBPASS' in os.environ:
 
 JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
 MIN_YEAR = 2002
-LEAGUES = ['ACT', 'ARC1', 'ARC2', 'EUSKOTREN', 'ETE', 'GBL', 'TXAPELKETAK']
-PAGE_SIZE=50
+LEAGUES = ['ACT', 'ARC1', 'ARC2', 'euskotren', 'ETE', 'GBL', 'TXAPELKETAK']
+PAGE_SIZE = 50

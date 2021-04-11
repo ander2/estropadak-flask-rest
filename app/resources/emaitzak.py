@@ -1,10 +1,10 @@
 from json.decoder import JSONDecodeError
-import app.config
 import logging
 import json
 import datetime
 
 from app.db_connection import db
+from app.config import LEAGUES, PAGE_SIZE
 from .utils import estropadak_transform
 from .taldeak import TaldeakDAO
 from flask_restx import Namespace, Resource, reqparse, fields
@@ -12,6 +12,7 @@ from flask_jwt import jwt_required
 
 api = Namespace('emaitzak', description='')
 emaitza_model = api.model('Emaitza', {
+    'id': fields.String(required=False, attribute="_id"),
     'talde_izena': fields.String(required=True),
     'ziabogak': fields.List(fields.String, required=True),
     'kalea': fields.Integer(required=True),
@@ -24,8 +25,13 @@ emaitza_model = api.model('Emaitza', {
     'estropada_izena': fields.String(required=True, min_length=8),
     'estropada_data': fields.DateTime(required=True),
     'talde_izen_normalizatua': fields.String(),
-    'liga': fields.String(required=True, enum=app.config.LEAGUES),
+    'liga': fields.String(required=True, enum=LEAGUES),
     'estropada_id': fields.String(required=True)
+})
+
+emaitzak_list_model = api.model('Emaitza listing model', {
+    'docs': fields.List(fields.Nested(emaitza_model)),
+    'total': fields.Integer(example=1)
 })
 
 
@@ -131,11 +137,12 @@ class EmaitzakLogic:
 
 @api.route('/', strict_slashes=False)
 class Emaitzak(Resource):
+    @api.marshal_with(emaitzak_list_model)
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument('criteria', type=str, help="Search criteria")
         parser.add_argument('page', type=int, help="Page number", default=0)
-        parser.add_argument('count', type=int, help="Elements per page", default=app.config.PAGE_SIZE)
+        parser.add_argument('count', type=int, help="Elements per page", default=PAGE_SIZE)
         args = parser.parse_args()
         try:
             criteria = json.loads(args['criteria'])
