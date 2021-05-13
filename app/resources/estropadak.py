@@ -27,14 +27,15 @@ emaitza_model = api.model('Emaitza estropadan', {
 
 estropada_model = api.model('Estropada', {
     'id': fields.String(required=False, attribute="_id"),
-    'izena': fields.String(required=True, min_length=8),
+    'izena': fields.String(required=True, min_length=4),
     'data': fields.DateTime(required=True),
     'lekua': fields.String(required=False),
     'liga': fields.String(required=True, enum=app.config.LEAGUES),
     'sailkapena': fields.List(fields.Nested(emaitza_model)),
     'urla': fields.String(min_length=8),
     'puntuagarria': fields.Boolean(required=False, default=True),
-    'kategoriak': fields.List(fields.String(), required=False)
+    'kategoriak': fields.List(fields.String(), required=False),
+    'oharrak': fields.String(required=False)
 })
 
 
