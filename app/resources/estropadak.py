@@ -7,7 +7,7 @@ import datetime
 
 from flask_restx import Namespace, Resource, fields
 from flask_jwt import jwt_required
-from app.db_connection import db, get_db_connection
+from app.db_connection import get_db_connection
 from .utils import league_year_parser
 
 

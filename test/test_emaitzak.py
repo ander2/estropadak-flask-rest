@@ -2,7 +2,7 @@ import pytest
 import json
 
 from app import app
-from app.db_connection import db
+from app.db_connection import get_db_connection
 
 
 @pytest.fixture()
@@ -17,15 +17,16 @@ def clean_up():
         '2019-06-18_ARC1_San-Juan',
         '2019-06-18_ARC1_Donostiarra',
     ]
-    for doc_id in docs:
-        try:
-            doc = db[doc_id]
-            if doc.exists():
-                # with Document(db, doc_id) as doc:
-                doc.fetch()
-                doc.delete()
-        except KeyError:
-            pass
+    with get_db_connection() as database:
+        for doc_id in docs:
+            try:
+                doc = database[doc_id]
+                if doc.exists():
+                    # with Document(db, doc_id) as doc:
+                    doc.fetch()
+                    doc.delete()
+            except KeyError:
+                pass
 
 
 def testEmaitzakByCriteria(estropadakApp):

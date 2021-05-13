@@ -3,7 +3,7 @@ import logging
 import json
 import datetime
 
-from app.db_connection import db
+from app.db_connection import get_db_connection
 from app.config import LEAGUES, PAGE_SIZE
 from .utils import estropadak_transform
 from .taldeak import TaldeakDAO
@@ -39,11 +39,12 @@ class EmaitzakDAO:
 
     @staticmethod
     def get_emaitza_by_id(id):
-        try:
-            emaitza = db[id]
-        except KeyError:
-            emaitza = None
-        return emaitza
+        with get_db_connection() as database:
+            try:
+                emaitza = database[id]
+            except KeyError:
+                emaitza = None
+            return emaitza
 
     @staticmethod
     def get_emaitzak_by_league_year(league, year, team=None):
@@ -57,15 +58,16 @@ class EmaitzakDAO:
             start = [league, team]
             end = [league, team + 'z']
 
-        emaitzak = db.get_view_result("emaitzak", "by_team",
-                                      startkey=start,
-                                      endkey=end,
-                                      include_docs=False,
-                                      reduce=False)
-        result = []
-        for emaitza in emaitzak:
-            result.append(db[emaitza['id']])
-        return result
+        with get_db_connection() as database:
+            emaitzak = database.get_view_result("emaitzak", "by_team",
+                                        startkey=start,
+                                        endkey=end,
+                                        include_docs=False,
+                                        reduce=False)
+            result = []
+            for emaitza in emaitzak:
+                result.append(db[emaitza['id']])
+            return result
 
     @staticmethod
     def get_estropadak_by_team(team, league_id):
@@ -75,19 +77,20 @@ class EmaitzakDAO:
         end = ["{}z".format(team)]
         if league_id:
             end.append(league_id)
-        try:
-            estropadak = db.view("estropadak/by_team",
-                                 estropadak_transform,
-                                 startkey=start,
-                                 endkey=end,
-                                 include_docs=True,
-                                 reduce=False)
-            result = []
-            for estropada in estropadak.rows:
-                result.append(estropada)
-            return result
-        except KeyError:
-            return {'error': 'Estropadak not found'}, 404
+        with get_db_connection() as database:
+            try:
+                estropadak = database.view("estropadak/by_team",
+                                    estropadak_transform,
+                                    startkey=start,
+                                    endkey=end,
+                                    include_docs=True,
+                                    reduce=False)
+                result = []
+                for estropada in estropadak.rows:
+                    result.append(estropada)
+                return result
+            except KeyError:
+                return {'error': 'Estropadak not found'}, 404
 
     @staticmethod
     def get_emaitzak(criteria: dict, page: int, count: int):
@@ -95,15 +98,16 @@ class EmaitzakDAO:
         end = start + count
         docs = []
         total = 0
-        emaitzak = db.get_query_result(criteria)
-        try:
-            for emaitza in emaitzak:
-                total = total + 1
-            emaitzak = db.get_query_result(criteria)
-            docs = emaitzak[start:end]
-        except IndexError:
-            return {'error': 'Bad pagination'}, 400
-        return (docs, total,)
+        with get_db_connection() as database:
+            emaitzak = database.get_query_result(criteria)
+            try:
+                for emaitza in emaitzak:
+                    total = total + 1
+                emaitzak = database.get_query_result(criteria)
+                docs = emaitzak[start:end]
+            except IndexError:
+                return {'error': 'Bad pagination'}, 400
+            return (docs, total,)
 
     @staticmethod
     def insert_emaitza_into_db(emaitza):
@@ -112,18 +116,20 @@ class EmaitzakDAO:
         izena = talde_izen_normalizatua.replace(' ', '-')
         emaitza['_id'] = f'{data.strftime("%Y-%m-%d")}_{emaitza["liga"]}_{izena}'
 
-        document = db.create_document(emaitza)
-        return document.exists()
+        with get_db_connection() as database:
+            document = database.create_document(emaitza)
+            return document.exists()
 
     @staticmethod
     def update_emaitza_into_db(emaitza_id, emaitza):
-        document = db[emaitza_id]
-        if document.exists():
-            document.update(emaitza)
-            document.save()
-            return document.exists()
-        else:
-            return None
+        with get_db_connection() as database:
+            document = database[emaitza_id]
+            if document.exists():
+                document.update(emaitza)
+                document.save()
+                return document.exists()
+            else:
+                return None
 
 
 class EmaitzakLogic:

@@ -2,7 +2,7 @@ import datetime
 import json
 import pytest
 from app import app
-from app.db_connection import db
+from app.db_connection import get_db_connection
 
 
 @pytest.fixture()
@@ -15,15 +15,15 @@ def clean_up():
         '2021-06-01_ARC1_Estropada-test2',
         '2021-06-02_ARC1_Estropada-test4',
     ]
-    for doc_id in docs:
-        try:
-            doc = db[doc_id]
-            if doc.exists():
-                # with Document(db, doc_id) as doc:
-                doc.fetch()
-                doc.delete()
-        except KeyError:
-            pass
+    with get_db_connection() as database:
+        for doc_id in docs:
+            try:
+                doc = database[doc_id]
+                if doc.exists():
+                    doc.fetch()
+                    doc.delete()
+            except KeyError:
+                pass
 
 
 class TestEstropadak():

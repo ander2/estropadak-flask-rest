@@ -14,9 +14,17 @@ def testYears(estropadakApp):
     rv = estropadakApp.get('/years')
     logging.info(rv)
     years = json.loads(rv.data.decode('utf-8'))
+    supported_leagues = ['act', 'arc1', 'arc2', 'euskotren', 'ete', 'gbl', 'bbl', 'gtl', 'btl', 'txapelketak']
     for res in years:
-        assert res['name'] in LEAGUES
-        assert 2010 in res['years']
+        assert res['name'] in supported_leagues
+        if res['name'] == 'act':
+            assert min(res['years']) > 2002
+        elif res['name'] == 'arc1' or res['name'] == 'arc2':
+            assert min(res['years']) > 2005
+        elif res['name'] == 'euskotren':
+            assert min(res['years']) > 2008
+        elif res['name'] == 'ete':
+            assert min(res['years']) > 2017
 
 
 def testYearsByLeague(estropadakApp):

@@ -1,6 +1,6 @@
 import app.config
 
-from app.db_connection import db, get_db_connection
+from app.db_connection import get_db_connection
 from .utils import get_team_color
 from flask_restx import Namespace, Resource, reqparse
 from .estropadak import EstropadakDAO
@@ -34,20 +34,21 @@ class EstatistikakDAO:
 
         start = key
         end = endkey
-        try:
-            ranks = db.get_view_result("estropadak", "rank",
-                            raw_result=True,
-                            startkey=start,
-                            endkey=end,
-                            include_docs=True,
-                            reduce=False)
-            result = []
-            for rank in ranks['rows']:
-                result.append(rank['doc'])
+        with get_db_connection() as database:
+            try:
+                ranks = database.get_view_result("estropadak", "rank",
+                                raw_result=True,
+                                startkey=start,
+                                endkey=end,
+                                include_docs=True,
+                                reduce=False)
+                result = []
+                for rank in ranks['rows']:
+                    result.append(rank['doc'])
+                return result
+            except KeyError:
+                return {'error': 'Estropadak not found'}, 404
             return result
-        except KeyError:
-            return {'error': 'Estropadak not found'}, 404
-        return result
 
 
 class EstatistikakLogic():

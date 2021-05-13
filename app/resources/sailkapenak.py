@@ -1,7 +1,7 @@
 import logging
 import app.config
 
-from app.db_connection import db
+from app.db_connection import get_db_connection
 from flask_restx import Namespace, Resource, reqparse
 
 api = Namespace('sailkapenak', description='')
@@ -11,17 +11,18 @@ class SailkapenakDAO:
 
     @staticmethod
     def get_sailkapena_by_league_year(league, year, category):
-        if league in ['gbl', 'bbl', 'btl', 'gtl']:
-            _category = category.replace(' ', '_').lower()
-            key = 'rank_{}_{}_{}'.format(league.upper(), year, _category)
-        else:
-            key = 'rank_{}_{}'.format(league.upper(), year)
-        try:
-            doc = db[key]
-        except KeyError:
-            return None
-        result = [doc]
-        return result
+        with get_db_connection() as database:
+            if league in ['gbl', 'bbl', 'btl', 'gtl']:
+                _category = category.replace(' ', '_').lower()
+                key = 'rank_{}_{}_{}'.format(league.upper(), year, _category)
+            else:
+                key = 'rank_{}_{}'.format(league.upper(), year)
+            try:
+                doc = database[key]
+            except KeyError:
+                return None
+            result = [doc]
+            return result
 
     @staticmethod
     def get_sailkapena_by_league(league):
@@ -33,20 +34,21 @@ class SailkapenakDAO:
 
         start = key
         end = endkey
-        try:
-            ranks = db.get_view_result("estropadak", "rank",
-                            raw_result=True,
-                            startkey=start,
-                            endkey=end,
-                            include_docs=True,
-                            reduce=False)
-            result = []
-            for rank in ranks['rows']:
-                result.append(rank['doc'])
+        with get_db_connection() as database:
+            try:
+                ranks = database.get_view_result("estropadak", "rank",
+                                raw_result=True,
+                                startkey=start,
+                                endkey=end,
+                                include_docs=True,
+                                reduce=False)
+                result = []
+                for rank in ranks['rows']:
+                    result.append(rank['doc'])
+                return result
+            except KeyError:
+                return {'error': 'Estropadak not found'}, 404
             return result
-        except KeyError:
-            return {'error': 'Estropadak not found'}, 404
-        return result
 
 
 parser = reqparse.RequestParser()
