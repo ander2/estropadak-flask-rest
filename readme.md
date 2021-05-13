@@ -37,7 +37,7 @@ $ python3 index.py
 
 # Endpoints
 
-There server exposes a swagger documentation page on port 5000, but this is a little resume:
+The server exposes a swagger [documentation](https://www.estropadak.eus/doc/api) page on port 5000, but this is a little resume:
 
 These are currently the exposed endpoints:
 
