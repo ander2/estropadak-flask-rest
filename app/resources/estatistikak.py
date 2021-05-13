@@ -1,6 +1,6 @@
 import app.config
 
-from app.db_connection import db
+from app.db_connection import db, get_db_connection
 from .utils import get_team_color
 from flask_restx import Namespace, Resource, reqparse
 from .estropadak import EstropadakDAO
@@ -11,17 +11,18 @@ api = Namespace('estatistikak', description='')
 class EstatistikakDAO:
     @staticmethod
     def get_sailkapena_by_league_year(league, year, category):
-        if league == 'gbl' or league == 'bbl':
+        if league in ['gbl', 'bbl', 'btl', 'gtl']:
             _category = category.replace(' ', '_').lower()
             key = 'rank_{}_{}_{}'.format(league.upper(), year, _category)
         else:
             key = 'rank_{}_{}'.format(league.upper(), year)
-        try:
-            doc = db[key]
-        except KeyError:
-            return None
-        result = doc
-        return result
+        with get_db_connection() as database:
+            try:
+                doc = database[key]
+            except KeyError:
+                return None
+            result = doc
+            return result
 
     @staticmethod
     def get_sailkapenak_by_league(league):
@@ -52,7 +53,7 @@ class EstatistikakDAO:
 class EstatistikakLogic():
 
     @staticmethod
-    def get_culumative_stats(league, year, team):
+    def get_culumative_stats(league, year, team, category):
         result = []
         if year is None:
             sailkapenak = EstatistikakDAO.get_sailkapenak_by_league(league)
@@ -72,7 +73,7 @@ class EstatistikakLogic():
                 except KeyError:
                     pass
         else:
-            sailkapena = EstatistikakDAO.get_sailkapena_by_league_year(league, year, None)
+            sailkapena = EstatistikakDAO.get_sailkapena_by_league_year(league, year, category)
             estropadak = EstropadakDAO.get_estropadak_by_league_year(
                 league,
                 year)
@@ -95,9 +96,9 @@ class EstatistikakLogic():
         return result
 
     @staticmethod
-    def get_points_per_race(league: str, year: int):
+    def get_points_per_race(league: str, year: int, category: str):
         result = []
-        sailkapena = EstatistikakDAO.get_sailkapena_by_league_year(league, year, None)
+        sailkapena = EstatistikakDAO.get_sailkapena_by_league_year(league, year, category)
         estropadak = EstropadakDAO.get_estropadak_by_league_year(
             league,
             year)
@@ -135,10 +136,10 @@ class EstatistikakLogic():
         return result
 
     @staticmethod
-    def get_rank(league: str, year: int, team: str):
+    def get_rank(league: str, year: int, team: str, category: str):
         result = []
         if team is None:
-            sailkapena = EstatistikakDAO.get_sailkapena_by_league_year(league, year, None)
+            sailkapena = EstatistikakDAO.get_sailkapena_by_league_year(league, year, category)
             sorted_teams = sorted(sailkapena['stats'], key=lambda tal: sailkapena['stats'][tal]['points'], reverse=True)
             rank = {
                 "key": 'Taldea',
@@ -272,6 +273,7 @@ class EstatistikakLogic():
             result.append(bajak)
         return result
 
+
 parser = reqparse.RequestParser()
 parser.add_argument('league', type=str, required=True, choices=app.config.LEAGUES, case_sensitive=False)
 parser.add_argument('year', type=int)
@@ -289,16 +291,17 @@ class Estatistikak(Resource):
         year = args.get('year')
         team = args.get('team')
         league = args.get('league')
+        category = args.get('category')
         stat_type = args.get('stat')
         if stat_type == 'cumulative':
-            result = EstatistikakLogic.get_culumative_stats(league, year, team)
+            result = EstatistikakLogic.get_culumative_stats(league, year, team, category)
         elif stat_type == 'points':
             if team:
                 result = EstatistikakLogic.get_points(league, team)
             else:
-                result = EstatistikakLogic.get_points_per_race(league, year)
+                result = EstatistikakLogic.get_points_per_race(league, year, category)
         elif stat_type == 'rank':
-            result = EstatistikakLogic.get_rank(league, year, team)
+            result = EstatistikakLogic.get_rank(league, year, team, category)
         elif stat_type == 'ages':
             result = EstatistikakLogic.get_ages(league, year, team)
         elif stat_type == 'incorporations':

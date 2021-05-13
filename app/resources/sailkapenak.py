@@ -11,7 +11,7 @@ class SailkapenakDAO:
 
     @staticmethod
     def get_sailkapena_by_league_year(league, year, category):
-        if league == 'gbl' or league == 'bbl':
+        if league in ['gbl', 'bbl', 'btl', 'gtl']:
             _category = category.replace(' ', '_').lower()
             key = 'rank_{}_{}_{}'.format(league.upper(), year, _category)
         else:

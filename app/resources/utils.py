@@ -69,7 +69,12 @@ def get_team_color(team: str):
     try:
         return colors[team]
     except KeyError:
-        return 'blue'
+        try:
+            if team.endswith((' A', ' B', ' C', ' D')):
+                team = team[:-2]
+            return colors[team.capitalize()]
+        except KeyError:
+            return 'blue'
  
 
 def create_id(estropada, emaitza, taldeak):
