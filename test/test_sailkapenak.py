@@ -37,3 +37,25 @@ def testSailkapenaForTeamThatNotExists(estropadakApp):
 def testSailkapenaForTeamWithYearThatNotExists(estropadakApp):
     rv = estropadakApp.get('/sailkapenak?league=act&year=1900&team=Orio')
     assert rv.status_code == 400
+
+
+def test_sailkapena_creation_without_credentials(estropadakApp):
+    rv = estropadakApp.post('/sailkapenak', json={
+        "league": "ACT",
+        "year": 2022,
+        "stats": [] 
+    })
+    assert rv.status_code == 401
+
+
+def test_sailkapena_creation_with_credentials(estropadakApp, credentials):
+    rv = estropadakApp.post('/auth', json=credentials)
+    token = rv.json['access_token']
+    rv = estropadakApp.post('/sailkapenak', json={
+        "league": "ACT",
+        "year": 2022,
+        "stats": [{
+            "name": "Donostiarra"
+        }]
+    }, headers=[('Authorization', f'JWT {token}')])
+    assert rv.status_code == 201

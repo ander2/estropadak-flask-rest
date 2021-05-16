@@ -2,9 +2,38 @@ import logging
 import app.config
 
 from app.db_connection import get_db_connection
-from flask_restx import Namespace, Resource, reqparse
+from flask_restx import Namespace, Resource, reqparse, fields
+from flask_jwt import jwt_required
 
 api = Namespace('sailkapenak', description='')
+rower_model = api.model('Rowers rank data', {
+    "altak": fields.Integer(description='New rowers in Team', required=True, default=0),
+    "bajak": fields.Integer(description='Rowers lefting Team', required=True, default=0)
+})
+age_model = api.model('Ages rank data', {
+    "min_age": fields.Integer(description='Min rower age in Team', required=False, default=0),
+    "max_age": fields.Integer(description='Max rower age in Team', required=False, default=0),
+    "avg_age": fields.Integer(description='Average rower age in Team', required=False, default=0)
+})
+rank_model = api.model('Team Rank', {
+    'best': fields.Integer(description='Team\'s best position', required=False, default=0),
+    'worst': fields.Integer(description='Team\'s worst position', required=False, default=0),
+    'points': fields.Integer(description="Team points in league ranking", required=False, default=0),
+    'position': fields.Integer(description="Team position in league ranking", required=False, default=0),
+    'positions': fields.List(fields.Integer, description="List will all positions", required=False, default=[]),
+    'cumulative': fields.List(fields.Integer, description="List will cumulative points thought league", required=False, default=[]),
+    'rowers': fields.Nested(rower_model),
+    'age': fields.Nested(age_model),
+})
+team_rank_model = api.model('Rank', {
+    'name': fields.String(description='Team name', required=True),
+    'value': fields.Nested(rank_model, required=False)
+})
+sailkapena_model = api.model('Sailkapena', {
+    'stats': fields.List(fields.Nested(team_rank_model)),
+    'league': fields.String(required=True, description="Ranking league", enum=app.config.LEAGUES),
+    'year': fields.Integer(required=True, description="Ranking year")
+})
 
 
 class SailkapenakDAO:
@@ -49,6 +78,26 @@ class SailkapenakDAO:
             except KeyError:
                 return {'error': 'Estropadak not found'}, 404
             return result
+
+    @staticmethod
+    def insert_sailkapena_into_db(sailkapena):
+        with get_db_connection() as database:
+            doc = database.create_document(sailkapena)
+            return doc.exists()
+
+
+class SailkapenakLogic():
+
+    @staticmethod
+    def create_sailkapena(sailkapena):
+        rank_id = f'rank_{sailkapena["league"]}_{sailkapena["year"]}'
+        stats = {stat['name']: stat.get('value', {}) for stat in sailkapena['stats']}
+        new_doc = {
+            '_id': rank_id,
+            'stats': stats
+        }
+        res = SailkapenakDAO.insert_sailkapena_into_db(new_doc)
+        return res
 
 
 parser = reqparse.RequestParser()
@@ -95,3 +144,17 @@ class Sailkapena(Resource):
                 }
             ]
             return result
+
+
+    @jwt_required()
+    @api.expect(sailkapena_model, validate=True)
+    def post(self):
+        try:
+            res = SailkapenakLogic.create_sailkapena(api.payload)
+            if res:
+                return {}, 201
+            else:
+                return {}, 400
+        except Exception as e:
+            logging.info("Error", exc_info=1)
+            return {'message': "Cannot create sailkapena"}, 400
