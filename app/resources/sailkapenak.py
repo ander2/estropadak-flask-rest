@@ -30,6 +30,7 @@ team_rank_model = api.model('Rank', {
     'value': fields.Nested(rank_model, required=False)
 })
 sailkapena_model = api.model('Sailkapena', {
+    'id': fields.String(required=False, readonly=True),
     'stats': fields.List(fields.Nested(team_rank_model)),
     'league': fields.String(required=True, description="Ranking league", enum=app.config.LEAGUES),
     'year': fields.Integer(required=True, description="Ranking year")
@@ -80,12 +81,38 @@ class SailkapenakDAO:
             return result
 
     @staticmethod
+    def get_sailkapena_by_id(id: str):
+        with get_db_connection() as database:
+            try:
+                return database[id]
+            except KeyError:
+                return None  # {'error': 'Sailkapena not found'}, 404
+
+    @staticmethod
     def insert_sailkapena_into_db(sailkapena):
         with get_db_connection() as database:
             doc = database.create_document(sailkapena)
             return doc.exists()
 
+    @staticmethod
+    def update_sailkapena_into_db(sailkapena_id, sailkapena):
+        with get_db_connection() as database:
+            doc = database[sailkapena_id]
+            stats = {}
+            for s in sailkapena['stats']:
+                stats[s['name']] = s['value']
+            doc['stats'] = stats
+            doc.save()
 
+    @staticmethod
+    def delete_sailkapena_from_db(sailkapena_id):
+        with get_db_connection() as database:
+            doc = database[sailkapena_id]
+            if doc.exists():
+                doc.fetch()
+                doc.delete()
+
+            
 class SailkapenakLogic():
 
     @staticmethod
@@ -99,6 +126,23 @@ class SailkapenakLogic():
         res = SailkapenakDAO.insert_sailkapena_into_db(new_doc)
         return res
 
+    @staticmethod
+    def get_sailkapena_by_id(sailkapena_id):
+        sailkapena = SailkapenakDAO.get_sailkapena_by_id(sailkapena_id)
+        _, league, year = sailkapena_id.split('_')
+        result = {
+            'id': sailkapena['_id'],
+            'league': league,
+            'year': int(year),
+            'stats': []
+        }
+        for k, v in sailkapena['stats'].items():
+            result['stats'].append({
+                'name': k,
+                'value': v
+            })
+        return result
+
 
 parser = reqparse.RequestParser()
 parser.add_argument('league', type=str, required=True, choices=app.config.LEAGUES, case_sensitive=False)
@@ -108,7 +152,7 @@ parser.add_argument('category', type=str)
 
 
 @api.route('/', strict_slashes=False)
-class Sailkapena(Resource):
+class Sailkapenak(Resource):
     @api.expect(parser, validate=True)
     def get(self):
         stats = None
@@ -158,3 +202,30 @@ class Sailkapena(Resource):
         except Exception as e:
             logging.info("Error", exc_info=1)
             return {'message': "Cannot create sailkapena"}, 400
+
+
+@api.route('/<string:sailkapena_id>')
+class Sailkapena(Resource):
+
+    @api.marshal_with(sailkapena_model)
+    def get(self, sailkapena_id):
+        stats = SailkapenakLogic.get_sailkapena_by_id(sailkapena_id)
+        if stats is None:
+            return "Sailkapenak not found", 404
+        else:
+            return stats
+
+    @jwt_required()
+    @api.expect(sailkapena_model, validate=True)
+    def put(self, sailkapena_id):
+        data = api.payload
+        try:
+            stats = SailkapenakDAO.update_sailkapena_into_db(sailkapena_id, data)
+            return stats
+        except Exception as e:
+            logging.info("Error", exc_info=1)
+            return "Cannot update sailkapena", 400
+
+    @jwt_required()
+    def delete(self, sailkapena_id):
+        SailkapenakDAO.delete_sailkapena_from_db(sailkapena_id)
