@@ -98,10 +98,7 @@ class SailkapenakDAO:
     def update_sailkapena_into_db(sailkapena_id, sailkapena):
         with get_db_connection() as database:
             doc = database[sailkapena_id]
-            stats = {}
-            for s in sailkapena['stats']:
-                stats[s['name']] = s['value']
-            doc['stats'] = stats
+            doc['stats'] = sailkapena['stats']
             doc.save()
 
     @staticmethod
@@ -142,6 +139,16 @@ class SailkapenakLogic():
                 'value': v
             })
         return result
+
+    @staticmethod
+    def update_sailkapena(id, sailkapena):
+        stats = {}
+        for s in sailkapena['stats']:
+            stats[s['name']] = s['value']
+        data = {
+            'stats': stats
+        }
+        SailkapenakDAO.update_sailkapena_into_db(id, data)
 
 
 parser = reqparse.RequestParser()
@@ -189,7 +196,6 @@ class Sailkapenak(Resource):
             ]
             return result
 
-
     @jwt_required()
     @api.expect(sailkapena_model, validate=True)
     def post(self):
@@ -220,7 +226,7 @@ class Sailkapena(Resource):
     def put(self, sailkapena_id):
         data = api.payload
         try:
-            stats = SailkapenakDAO.update_sailkapena_into_db(sailkapena_id, data)
+            stats = SailkapenakLogic.update_sailkapena(sailkapena_id, data)
             return stats
         except Exception as e:
             logging.info("Error", exc_info=1)
