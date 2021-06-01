@@ -2,7 +2,6 @@ import logging
 from app.db_connection import get_db_connection
 from flask_restx import Namespace, Resource
 from .utils import required_league_year_parser
-from .estropadak import EstropadakDAO
 
 api = Namespace('taldeak', description='')
 
