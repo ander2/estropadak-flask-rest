@@ -14,6 +14,7 @@ def clean_up():
         '2021-06-01_ACT_Estropada-test',
         '2021-06-01_ARC1_Estropada-test2',
         '2021-06-02_ARC1_Estropada-test4',
+        '2021-06-01_ACT_Kaiku'
     ]
     with get_db_connection() as database:
         for doc_id in docs:
@@ -201,3 +202,31 @@ class TestEstropadak():
             "sailkapena": []
         }, headers=[('Authorization', f'JWT {token}')])
         assert rv.status_code == 400
+
+    def testEstropadaCreationWithSailkapena(self, estropadakApp, credentials):
+        rv = estropadakApp.post('/auth', json=credentials)
+        token = rv.json['access_token']
+        rv = estropadakApp.post('/estropadak', json={
+            "izena": "Estropada test",
+            "data": "2021-06-01 17:00",
+            "liga": "ACT",
+            "sailkapena": [{
+                "talde_izena": "KAIKU",
+                "denbora": "20:14,84",
+                "puntuazioa": 5,
+                "posizioa": 8,
+                "tanda": 1,
+                "tanda_postua": 1,
+                "kalea": 1,
+                "ziabogak": [
+                    "05:06",
+                    "09:56",
+                    "15:24"
+                ]
+            }]
+        }, headers=[('Authorization', f'JWT {token}')])
+        assert rv.status_code == 201
+        rv = estropadakApp.get('/estropadak/2021-06-01_ACT_Estropada-test') 
+        assert rv.status_code == 200
+        rv = estropadakApp.get('/emaitzak/2021-06-01_ACT_Kaiku') 
+        assert rv.status_code == 200

@@ -140,6 +140,19 @@ class EmaitzakLogic:
         emaitza['talde_izen_normalizatua'] = talde_izen_normalizatua
         return EmaitzakDAO.update_emaitza_into_db(emaitza_id, emaitza)
 
+    @staticmethod
+    def create_emaitzak_from_estropada(estropada):
+        for emaitza in estropada['sailkapena']:
+            emaitza['type'] = 'emaitza'
+            emaitza['estropada_data'] = estropada['data']
+            emaitza['estropada_izena'] = estropada['izena']
+            emaitza['estropada_id'] = estropada['_id']
+            emaitza['liga'] = estropada['liga']
+            talde_izen_normalizatua = TaldeakDAO.get_talde_izen_normalizatua(emaitza['talde_izena'])
+            emaitza['talde_izen_normalizatua'] = talde_izen_normalizatua
+            EmaitzakDAO.insert_emaitza_into_db(emaitza)
+        return True
+
 
 @api.route('/', strict_slashes=False)
 class Emaitzak(Resource):
