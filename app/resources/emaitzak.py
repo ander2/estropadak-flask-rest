@@ -131,6 +131,16 @@ class EmaitzakDAO:
             else:
                 return None
 
+    @staticmethod
+    def delete_emaitza_from_db(emaitza_id):
+        with get_db_connection() as database:
+            document = database[emaitza_id]
+            if document.exists():
+                document.fetch()
+                document.delete()
+                return True
+        return False
+
 
 class EmaitzakLogic:
     @staticmethod
@@ -208,3 +218,13 @@ class Emaitza(Resource):
             return emaitza
         else:
             return {}, 404
+
+    @jwt_required()
+    def delete(self, emaitza_id):
+
+        emaitza = EmaitzakDAO.delete_emaitza_from_db(emaitza_id)
+
+        if emaitza:
+            return {}, 200
+        else:
+            return {"msg": "Cannot delete document"}, 401
