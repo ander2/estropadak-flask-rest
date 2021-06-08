@@ -9,6 +9,7 @@ from flask_restx import Namespace, Resource, fields
 from flask_jwt import jwt_required
 from app.db_connection import get_db_connection
 from .utils import league_year_parser
+from .emaitzak import EmaitzakLogic
 
 
 api = Namespace('estropadak', description='')
@@ -96,10 +97,6 @@ class EstropadakDAO:
 
     @staticmethod
     def insert_estropada_into_db(estropada):
-        data = datetime.datetime.strptime(estropada['data'], '%Y-%m-%d %H:%M')
-        izena = estropada['izena'].replace(' ', '-')
-        estropada['_id'] = f'{data.strftime("%Y-%m-%d")}_{estropada["liga"]}_{izena}'
-
         logging.info(estropada)
         with get_db_connection() as database:
             document = database.create_document(estropada)
@@ -129,11 +126,15 @@ class EstropadakLogic():
 
     @staticmethod
     def create_estropada(estropada):
+        data = datetime.datetime.strptime(estropada['data'], '%Y-%m-%d %H:%M')
+        izena = estropada['izena'].replace(' ', '-')
+        estropada['_id'] = f'{data.strftime("%Y-%m-%d")}_{estropada["liga"]}_{izena}'
+
         if estropada.get('type', None) != 'estropada':
             estropada['type'] = 'estropada'
         if estropada.get('sailkapena', []):
-            # todo implement EmaitzaLogic.create_emaitza
-            pass
+            EmaitzakLogic.create_emaitzak_from_estropada(estropada)
+
         return EstropadakDAO.insert_estropada_into_db(estropada)
 
     @staticmethod

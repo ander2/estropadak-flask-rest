@@ -131,6 +131,16 @@ class EmaitzakDAO:
             else:
                 return None
 
+    @staticmethod
+    def delete_emaitza_from_db(emaitza_id):
+        with get_db_connection() as database:
+            document = database[emaitza_id]
+            if document.exists():
+                document.fetch()
+                document.delete()
+                return True
+        return False
+
 
 class EmaitzakLogic:
     @staticmethod
@@ -139,6 +149,19 @@ class EmaitzakLogic:
         talde_izen_normalizatua = TaldeakDAO.get_talde_izen_normalizatua(emaitza['talde_izena'])
         emaitza['talde_izen_normalizatua'] = talde_izen_normalizatua
         return EmaitzakDAO.update_emaitza_into_db(emaitza_id, emaitza)
+
+    @staticmethod
+    def create_emaitzak_from_estropada(estropada):
+        for emaitza in estropada['sailkapena']:
+            emaitza['type'] = 'emaitza'
+            emaitza['estropada_data'] = estropada['data']
+            emaitza['estropada_izena'] = estropada['izena']
+            emaitza['estropada_id'] = estropada['_id']
+            emaitza['liga'] = estropada['liga']
+            talde_izen_normalizatua = TaldeakDAO.get_talde_izen_normalizatua(emaitza['talde_izena'])
+            emaitza['talde_izen_normalizatua'] = talde_izen_normalizatua
+            EmaitzakDAO.insert_emaitza_into_db(emaitza)
+        return True
 
 
 @api.route('/', strict_slashes=False)
@@ -195,3 +218,13 @@ class Emaitza(Resource):
             return emaitza
         else:
             return {}, 404
+
+    @jwt_required()
+    def delete(self, emaitza_id):
+
+        emaitza = EmaitzakDAO.delete_emaitza_from_db(emaitza_id)
+
+        if emaitza:
+            return {}, 200
+        else:
+            return {"msg": "Cannot delete document"}, 401

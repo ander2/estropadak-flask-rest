@@ -256,3 +256,39 @@ def testEmaitzakModificationWithCredentials(estropadakApp, credentials, clean_up
     assert rv.status_code == 200
     assert rv.get_json()['posizioa'] == 7
     assert rv.get_json()['kalea'] == 3
+
+
+def testEmaitzakDeletion(estropadakApp, credentials, clean_up):
+    rv = estropadakApp.post('/auth', json=credentials)
+    token = rv.json['access_token']
+    emaitza_data = {
+        "talde_izena": "ONDARROA",
+        "tanda_postua": 2,
+        "tanda": 2,
+        "denbora": "20:30,28",
+        "posizioa": 6,
+        "ziabogak": [
+            "2:16",
+            "7:36",
+            "12:35"
+        ],
+        "puntuazioa": 7,
+        "kalea": 5,
+        "estropada_izena": "III. FEGEMU BANDERA",
+        "estropada_data": "2019-06-18 12:00",  # Fake date, just to not conflict
+        "liga": "ARC1",
+        "estropada_id": "37a4adac975ce9ab29decb228900718b",
+        "type": "emaitza",
+        "talde_izen_normalizatua": "Ondarroa"
+    }
+    rv = estropadakApp.post(
+        '/emaitzak',
+        json=emaitza_data,
+        headers=[('Authorization', f'JWT {token}')])
+    assert rv.status_code == 201
+
+    id = "2019-06-18_ARC1_Ondarroa"
+    rv = estropadakApp.delete(
+        f'/emaitzak/{id}',
+        headers=[('Authorization', f'JWT {token}')])
+    assert rv.status_code == 200
