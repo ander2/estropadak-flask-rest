@@ -18,10 +18,10 @@ age_model = api.model('Ages rank data', {
 rank_model = api.model('Team Rank', {
     'best': fields.Integer(description='Team\'s best position', required=False, default=0),
     'worst': fields.Integer(description='Team\'s worst position', required=False, default=0),
-    'points': fields.Integer(description="Team points in league ranking", required=False, default=0),
+    'points': fields.Float(description="Team points in league ranking", required=False, default=0),
     'position': fields.Integer(description="Team position in league ranking", required=False, default=0),
     'positions': fields.List(fields.Integer, description="List will all positions", required=False, default=[]),
-    'cumulative': fields.List(fields.Integer, description="List will cumulative points thought league", required=False, default=[]),
+    'cumulative': fields.Float(fields.Integer, description="List will cumulative points thought league", required=False, default=[]),
     'rowers': fields.Nested(rower_model),
     'age': fields.Nested(age_model),
 })
