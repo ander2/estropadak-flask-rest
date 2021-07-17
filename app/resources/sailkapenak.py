@@ -21,7 +21,7 @@ rank_model = api.model('Team Rank', {
     'points': fields.Float(description="Team points in league ranking", required=False, default=0),
     'position': fields.Integer(description="Team position in league ranking", required=False, default=0),
     'positions': fields.List(fields.Integer, description="List will all positions", required=False, default=[]),
-    'cumulative': fields.Float(fields.Integer, description="List will cumulative points thought league", required=False, default=[]),
+    'cumulative': fields.List(fields.Float, description="List will cumulative points thought league", required=False, default=[]),
     'rowers': fields.Nested(rower_model),
     'age': fields.Nested(age_model),
 })
@@ -45,6 +45,8 @@ class SailkapenakDAO:
             if league in ['gbl', 'bbl', 'btl', 'gtl']:
                 _category = category.replace(' ', '_').lower()
                 key = 'rank_{}_{}_{}'.format(league.upper(), year, _category)
+            elif league == 'EUSKOTREN':
+                key = 'rank_{}_{}'.format(league.lower(), year)
             else:
                 key = 'rank_{}_{}'.format(league.upper(), year)
             try:

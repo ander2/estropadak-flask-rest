@@ -43,7 +43,6 @@ estropada_model = api.model('Estropada', {
 class EstropadakDAO:
     @staticmethod
     def get_estropada_by_id(id):
-        
         with get_db_connection() as database:
             try:
                 estropada = database[id]
@@ -128,6 +127,9 @@ class EstropadakLogic():
     def create_estropada(estropada):
         data = datetime.datetime.strptime(estropada['data'], '%Y-%m-%d %H:%M')
         izena = estropada['izena'].replace(' ', '-')
+
+        if estropada["liga"] == 'EUSKOTREN':
+            estropada["liga"] = 'euskotren'
         estropada['_id'] = f'{data.strftime("%Y-%m-%d")}_{estropada["liga"]}_{izena}'
 
         if estropada.get('type', None) != 'estropada':
@@ -141,6 +143,8 @@ class EstropadakLogic():
     def update_estropada(estropada_id, estropada):
         if estropada.get('type', None) != 'estropada':
             estropada['type'] = 'estropada'
+        if estropada["liga"] == 'EUSKOTREN':
+            estropada["liga"] = 'euskotren'
         if estropada.get('sailkapena', []):
             # todo implement EmaitzaLogic.create_emaitza
             pass
