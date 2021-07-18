@@ -153,7 +153,7 @@ class EstropadakLogic():
 
 @api.route('/', strict_slashes=False)
 class Estropadak(Resource):
-    @api.marshal_with(estropada_model)
+    @api.marshal_with(estropada_model, skip_none=True)
     @api.expect(league_year_parser, validate=True)
     def get(self):
         args = league_year_parser.parse_args()
@@ -181,7 +181,7 @@ class Estropadak(Resource):
 
 @api.route('/<string:estropada_id>')
 class Estropada(Resource):
-    @api.marshal_with(estropada_model)
+    @api.marshal_with(estropada_model, skip_none=True)
     def get(self, estropada_id):
         estropada = EstropadakDAO.get_estropada_by_id(estropada_id)
         if estropada is None:
