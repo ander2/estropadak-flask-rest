@@ -96,7 +96,8 @@ class TestEstropadak():
             "izena": "Estropada test",
             "data": "2021-06-01 17:00",
             "liga": "ACT",
-            "sailkapena": []
+            "sailkapena": [],
+            "lekua": "Nonbait"
         }, headers=[('Authorization', f'JWT {token}')])
         assert rv.status_code == 201
 
@@ -114,7 +115,7 @@ class TestEstropadak():
             "izena": "Estropada test",
             "data": "2021-06-01 17:00",
             "liga": "ACT",
-            "sailkapena": []
+            "sailkapena": [],
         })
         assert rv.status_code == 401
 
@@ -131,7 +132,8 @@ class TestEstropadak():
             "izena": "Estropada test2",
             "data": "2021-06-01 17:30",
             "liga": "ARC1",
-            "sailkapena": []
+            "sailkapena": [],
+            "lekua": "Nonbait"
         }, headers=[('Authorization', f'JWT {token}')])
         assert rv.status_code == 200
         rv = estropadakApp.get('/estropadak/2021-06-01_ARC1_Estropada-test2')
@@ -139,6 +141,7 @@ class TestEstropadak():
         recovered_doc['izena'] == "Estropada test2"
         recovered_doc['data'] == "2021-06-01 17:30"
         recovered_doc['liga'] == "arc1"
+        recovered_doc['lekua'] == 'Nonbait'
         recovered_doc['sailkapena'] == []
 
     def testEstropadaDeletionWithoutCredentials(self, estropadakApp, credentials, clean_up):
