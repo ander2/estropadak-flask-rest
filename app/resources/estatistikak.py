@@ -141,7 +141,7 @@ class EstatistikakLogic():
         result = []
         if team is None:
             sailkapena = EstatistikakDAO.get_sailkapena_by_league_year(league, year, category)
-            sorted_teams = sorted(sailkapena['stats'], key=lambda tal: sailkapena['stats'][tal]['points'], reverse=True)
+            sorted_teams = sorted(sailkapena['stats'], key=lambda tal: sailkapena['stats'][tal]['position'], reverse=False)
             rank = {
                 "key": 'Taldea',
                 "values": [{

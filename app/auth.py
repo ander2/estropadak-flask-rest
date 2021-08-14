@@ -17,9 +17,9 @@ def authenticate(user, password):
     params = urllib.parse.urlencode({"name": user, "password": password})
     headers = {"Content-type": "application/x-www-form-urlencoded",
                "Accept": "text/plain"}
-    host = config['COUCHDB'].split(':')[0]
-    port = config['COUCHDB'].split(':')[1]
-    conn = http.client.HTTPConnection(host, int(port))
+    host = config['COUCHDB_HOST']
+    port = int(config['COUCHDB_PORT'])
+    conn = http.client.HTTPConnection(host, port)
     conn.request("POST", "/_session", params, headers)
     response = conn.getresponse()
     res = json.loads(response.read())

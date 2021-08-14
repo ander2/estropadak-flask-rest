@@ -1,9 +1,6 @@
 import logging
-
-from attr import attributes
-
-import app.config
 import datetime
+import app.config
 
 from flask_restx import Namespace, Resource, fields
 from flask_jwt import jwt_required
@@ -108,6 +105,7 @@ class EstropadakDAO:
             doc['izena'] = estropada['izena']
             doc['data'] = estropada['data']
             doc['liga'] = estropada['liga']
+            doc['lekua'] = estropada['lekua']
             doc['sailkapena'] = estropada['sailkapena']
             doc['type'] = estropada['type']
             doc.save()
