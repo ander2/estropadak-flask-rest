@@ -104,19 +104,20 @@ class EstatistikakLogic():
             league,
             year)
         estropadak = [estropada for estropada in estropadak if not estropada['izena'].startswith('Play')]
-        points_max = len(sailkapena['stats'])
-        for taldea, stats in sailkapena['stats'].items():
-            team_values = {
-                "key": taldea,
-                "color": get_team_color(taldea),
-            }
-            values = [{
-                "label": val[1]['izena'],
-                "x": i,
-                "value": points_max - val[0] + 1}
-                for i, val in enumerate(zip(stats['positions'], estropadak))]
-            team_values["values"] = values
-            result.append(team_values)
+        if sailkapena:
+            points_max = len(sailkapena['stats'])
+            for taldea, stats in sailkapena['stats'].items():
+                team_values = {
+                    "key": taldea,
+                    "color": get_team_color(taldea),
+                }
+                values = [{
+                    "label": val[1]['izena'],
+                    "x": i,
+                    "value": points_max - val[0] + 1}
+                    for i, val in enumerate(zip(stats['positions'], estropadak))]
+                team_values["values"] = values
+                result.append(team_values)
         return result
 
     @staticmethod
@@ -171,6 +172,8 @@ class EstatistikakLogic():
         result = []
         if team is None:
             sailkapena = EstatistikakDAO.get_sailkapena_by_league_year(league, year, None)
+            if not sailkapena or not sailkapena.get('stats', {}).get('age'):
+                return result
             min_ages = {
                 "key": 'Min',
                 "values": [{
@@ -300,10 +303,20 @@ class Estatistikak(Resource):
             if team:
                 result = EstatistikakLogic.get_points(league, team)
             else:
+                if not league or not year:
+                    return {"message": "You need to specify year and league"}, 400
                 result = EstatistikakLogic.get_points_per_race(league, year, category)
         elif stat_type == 'rank':
+            if team and not league:
+                return {"message": "You need to specify a league"}, 400
+            if not team and (not league or not year):
+                return {"message": "You need to specify year and league"}, 400
             result = EstatistikakLogic.get_rank(league, year, team, category)
         elif stat_type == 'ages':
+            if team and not league:
+                return {"message": "You need to specify a league"}, 400
+            if not team and (not league or not year):
+                return {"message": "You need to specify year and league"}, 400
             result = EstatistikakLogic.get_ages(league, year, team)
         elif stat_type == 'incorporations':
             result = EstatistikakLogic.get_incorporations(league, year, team)
