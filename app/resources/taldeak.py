@@ -1,9 +1,15 @@
 import logging
 from app.db_connection import get_db_connection
-from flask_restx import Namespace, Resource
+from flask_restx import Namespace, Resource, fields
 from .utils import required_league_year_parser
 
 api = Namespace('taldeak', description='')
+
+taldeak_model = api.model('Taldea', {
+    'name': fields.String(required=True),
+    'alt_names': fields.List(fields.String, required=False),
+    'short': fields.String(required=False),
+})
 
 
 class PlantilaDAO:
@@ -32,10 +38,10 @@ class PlantilaDAO:
                     _rowers.append(rower)
                 taldea['rowers'] = _rowers
 
-            except TypeError as error:
+            except TypeError:
                 logging.info("Not found", exc_info=1)
                 taldea = None
-            except KeyError as error:
+            except KeyError:
                 logging.info("Not found", exc_info=1)
                 taldea = None
             return taldea
@@ -48,10 +54,10 @@ class TaldeakDAO:
         with get_db_connection() as database:
             try:
                 taldea = database[id]
-            except TypeError as error:
+            except TypeError:
                 logging.info("Not found", exc_info=1)
                 taldea = None
-            except KeyError as error:
+            except KeyError:
                 logging.info("Not found", exc_info=1)
                 taldea = None
             return taldea
@@ -65,20 +71,25 @@ class TaldeakDAO:
         taldeak = []
         with get_db_connection() as database:
             try:
+                all_teams = database['talde_izenak2']
                 if year is not None:
                     resume = database[f'rank_{league}_{year}']
-                    all_teams = database['talde_izenak']
                     for taldea in resume['stats'].keys():
-                        alt_names = [alt for alt, name in all_teams.items() if name == taldea]
-                        taldeak.append({'name': taldea, 'alt_names': alt_names})
+                        taldeak.append({
+                            "name": taldea,
+                            "alt_names": all_teams[taldea].get('alt_names'),
+                            "short": all_teams[taldea].get('acronym')
+                        })
                 else:
                     league = league.lower()
                     resume = database[f'taldeak_{league}']
-                    all_teams = database['talde_izenak']
                     for taldea in resume['taldeak']:
-                        alt_names = [alt for alt, name in all_teams.items() if name == taldea]
-                        taldeak.append({'name': taldea, 'alt_names': alt_names})
-            except KeyError as error:
+                        taldeak.append({
+                            "name": taldea,
+                            "alt_names": all_teams[taldea].get('alt_names'),
+                            "short": all_teams[taldea].get('acronym')
+                        })
+            except KeyError:
                 logging.info("Not found", exc_info=1)
             return taldeak
 
