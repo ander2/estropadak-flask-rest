@@ -65,8 +65,6 @@ class TaldeakDAO:
     @staticmethod
     def get_taldeak(league, year=None):
         league = league.upper()
-        if league.lower() == 'euskotren':
-            league = league.lower()
 
         taldeak = []
         with get_db_connection() as database:
