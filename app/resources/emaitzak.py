@@ -98,6 +98,9 @@ class EmaitzakDAO:
         end = start + count
         docs = []
         total = 0
+        if 'liga' in criteria:
+            if criteria['liga'] == 'EUSKOTREN':
+                criteria['liga'] = criteria['liga'].lower()
         with get_db_connection() as database:
             emaitzak = database.get_query_result(criteria)
             try:
