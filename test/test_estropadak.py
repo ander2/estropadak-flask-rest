@@ -233,3 +233,11 @@ class TestEstropadak():
         assert rv.status_code == 200
         rv = estropadakApp.get('/emaitzak/2021-06-01_ACT_Kaiku') 
         assert rv.status_code == 200
+
+    def test_estropada_with_two_day_sailkapena(self, estropadakApp):
+        rv = estropadakApp.get('/estropadak/2021-07-03_ACT_V-Bandeira-cidade-da-Coruña-(J1)')
+        estropada = json.loads(rv.data.decode('utf-8'))
+        assert len(estropada['bi_eguneko_sailkapena']) == 12
+        for sailk in estropada['bi_eguneko_sailkapena']:
+            if sailk['talde_izena'] == 'GO FIT HONDARRIBIA':
+                assert sailk['denbora_batura'] == '41:22,44'
