@@ -120,6 +120,12 @@ class EstropadakDAO:
             doc['lekua'] = estropada['lekua']
             doc['sailkapena'] = estropada['sailkapena']
             doc['type'] = estropada['type']
+            if estropada.get('bi_jardunaldiko_bandera'):
+                doc['bi_jardunaldiko_bandera'] = estropada['bi_jardunaldiko_bandera']
+            if estropada.get('related_estropada'):
+                doc['related_estropada'] = estropada['related_estropada']
+            if estropada.get('jardunaldia'):
+                doc['jardunaldia'] = estropada['jardunaldia']
             doc.save()
 
     @staticmethod
@@ -169,16 +175,20 @@ class EstropadakLogic():
             denborak_bi = {sailk['talde_izena']: sailk['denbora'] for sailk in estropada_bi['sailkapena']}
             estropada['bi_eguneko_sailkapena'] = []
             for taldea, denbora in denborak_bat.items():
-                denb1 = datetime.datetime.strptime(denbora, '%M:%S,%f')
-                denb2 = datetime.datetime.strptime(denborak_bi[taldea], '%M:%S,%f')
-                delta = datetime.timedelta(minutes=denb2.minute, seconds=denb2.second, microseconds=denb2.microsecond)
-                totala = denb1 + delta
-                print(totala)
+                try:
+                    denb1 = datetime.datetime.strptime(denbora, '%M:%S,%f')
+                    denb2 = datetime.datetime.strptime(denborak_bi[taldea], '%M:%S,%f')
+                    delta = datetime.timedelta(minutes=denb2.minute, seconds=denb2.second, microseconds=denb2.microsecond)
+                    totala = denb1 + delta
+                    totala_str = totala.strftime('%M:%S,%f')[:-4]
+                except ValueError:
+                    if denbora.startswith('Exc') or denborak_bi[taldea].startswith('Exc'):
+                        totala_str = 'Excl.'
                 estropada['bi_eguneko_sailkapena'].append({
                     'talde_izena': taldea,
                     'lehen_jardunaldiko_denbora': denbora,
                     'bigarren_jardunaldiko_denbora': denborak_bi[taldea],
-                    'denbora_batura': totala.strftime('%M:%S,%f')[:-4],
+                    'denbora_batura': totala_str,
                 })
                 estropada['bi_eguneko_sailkapena'] = sorted(estropada['bi_eguneko_sailkapena'], key=lambda x: x['denbora_batura'])
                 for ind, item in enumerate(estropada['bi_eguneko_sailkapena']):
