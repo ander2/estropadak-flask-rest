@@ -23,6 +23,14 @@ emaitza_model = api.model('Emaitza estropadan', {
     'kategoria': fields.String(),
 })
 
+bi_eguneko_emaitza_model = api.model('Emaitza estropadan', {
+    'lehen_jardunaldiko_denbora': fields.String(),
+    'bigarren_jardunaldiko_denbora': fields.String(),
+    'denbora_batura': fields.String(),
+    'posizioa': fields.Integer(),
+    'talde_izena': fields.String(required=True)
+})
+
 estropada_model = api.model('Estropada', {
     'id': fields.String(required=False, attribute="_id"),
     'izena': fields.String(required=True, min_length=4),
@@ -30,6 +38,10 @@ estropada_model = api.model('Estropada', {
     'lekua': fields.String(required=False),
     'liga': fields.String(required=True, enum=app.config.LEAGUES),
     'sailkapena': fields.List(fields.Nested(emaitza_model)),
+    'bi_jardunaldiko_bandera': fields.Boolean(default=False),
+    'jardunaldia': fields.Integer(),
+    'bi_eguneko_sailkapena': fields.List(fields.Nested(bi_eguneko_emaitza_model)),
+    'related_estropada': fields.String(),
     'urla': fields.String(min_length=8),
     'puntuagarria': fields.Boolean(required=False, default=True),
     'kategoriak': fields.List(fields.String(), required=False),
@@ -108,6 +120,12 @@ class EstropadakDAO:
             doc['lekua'] = estropada['lekua']
             doc['sailkapena'] = estropada['sailkapena']
             doc['type'] = estropada['type']
+            if estropada.get('bi_jardunaldiko_bandera'):
+                doc['bi_jardunaldiko_bandera'] = estropada['bi_jardunaldiko_bandera']
+            if estropada.get('related_estropada'):
+                doc['related_estropada'] = estropada['related_estropada']
+            if estropada.get('jardunaldia'):
+                doc['jardunaldia'] = estropada['jardunaldia']
             doc.save()
 
     @staticmethod
@@ -148,6 +166,36 @@ class EstropadakLogic():
             pass
         return EstropadakDAO.update_estropada_into_db(estropada_id, estropada)
 
+    @staticmethod
+    def get_estropada(estropada_id):
+        estropada = EstropadakDAO.get_estropada_by_id(estropada_id)
+        if estropada and estropada.get('bi_jardunaldiko_bandera'):
+            estropada['bi_eguneko_sailkapena'] = []
+            estropada_bi = EstropadakDAO.get_estropada_by_id(estropada['related_estropada'])
+            if len(estropada.get('sailkapena', [])) > 0 and len(estropada_bi.get('sailkapena', [])) > 0:
+                denborak_bat = {sailk['talde_izena']: sailk['denbora'] for sailk in estropada['sailkapena']}
+                denborak_bi = {sailk['talde_izena']: sailk['denbora'] for sailk in estropada_bi['sailkapena']}
+                for taldea, denbora in denborak_bat.items():
+                    try:
+                        denb1 = datetime.datetime.strptime(denbora, '%M:%S,%f')
+                        denb2 = datetime.datetime.strptime(denborak_bi[taldea], '%M:%S,%f')
+                        delta = datetime.timedelta(minutes=denb2.minute, seconds=denb2.second, microseconds=denb2.microsecond)
+                        totala = denb1 + delta
+                        totala_str = totala.strftime('%M:%S,%f')[:-4]
+                    except ValueError:
+                        if denbora.startswith('Exc') or denborak_bi[taldea].startswith('Exc'):
+                            totala_str = 'Excl.'
+                    estropada['bi_eguneko_sailkapena'].append({
+                        'talde_izena': taldea,
+                        'lehen_jardunaldiko_denbora': denbora,
+                        'bigarren_jardunaldiko_denbora': denborak_bi[taldea],
+                        'denbora_batura': totala_str,
+                    })
+                    estropada['bi_eguneko_sailkapena'] = sorted(estropada['bi_eguneko_sailkapena'], key=lambda x: x['denbora_batura'])
+                    for ind, item in enumerate(estropada['bi_eguneko_sailkapena']):
+                        item['posizioa'] = ind + 1
+        return estropada
+
 
 @api.route('/', strict_slashes=False)
 class Estropadak(Resource):
@@ -181,7 +229,7 @@ class Estropadak(Resource):
 class Estropada(Resource):
     @api.marshal_with(estropada_model, skip_none=True)
     def get(self, estropada_id):
-        estropada = EstropadakDAO.get_estropada_by_id(estropada_id)
+        estropada = EstropadakLogic.get_estropada(estropada_id)
         if estropada is None:
             return "Estropada not found", 404
         else:

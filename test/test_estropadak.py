@@ -27,6 +27,47 @@ def clean_up():
                 pass
 
 
+@pytest.fixture()
+def two_day_competition():
+    print("setup")
+    docs = [{
+        "_id": "2021-06-01_ACT_J1",
+        "data": "2021-06-01T18:00:00",
+        "izena": "J1",
+        "liga": "ACT",
+        "urla": "http://foo.com",
+        "bi_jardunaldiko_bandera": True,
+        "jardunaldia": 1,
+        "related_estropada": "2021-06-02_ACT_J2"
+    }, {
+        "_id": "2021-06-02_ACT_J2",
+        "data": "2021-06-02T18:00:00",
+        "izena": "J2",
+        "liga": "ACT",
+        "urla": "http://foo.com",
+        "bi_jardunaldiko_bandera": True,
+        "jardunaldia": 2,
+        "related_estropada": "2021-06-01_ACT_J1"
+    }]
+    with get_db_connection() as database:
+        for doc in docs:
+            try:
+                docum = database.create_document(doc)
+                print(f"Created {docum['_id']}")
+            except KeyError:
+                pass
+        yield
+        for doc in docs:
+            try:
+                doc = database[doc['_id']]
+                print(f"Deleted {doc['_id']}")
+                if doc.exists():
+                    doc.fetch()
+                    doc.delete()
+            except KeyError:
+                pass
+
+
 class TestEstropadak():
 
     @pytest.fixture()
@@ -229,7 +270,23 @@ class TestEstropadak():
             }]
         }, headers=[('Authorization', f'JWT {token}')])
         assert rv.status_code == 201
-        rv = estropadakApp.get('/estropadak/2021-06-01_ACT_Estropada-test') 
+        rv = estropadakApp.get('/estropadak/2021-06-01_ACT_Estropada-test')
         assert rv.status_code == 200
-        rv = estropadakApp.get('/emaitzak/2021-06-01_ACT_Kaiku') 
+        rv = estropadakApp.get('/emaitzak/2021-06-01_ACT_Kaiku')
         assert rv.status_code == 200
+
+    def test_estropada_with_two_day_sailkapena(self, estropadakApp):
+        rv = estropadakApp.get('/estropadak/2021-07-03_ACT_V-Bandeira-cidade-da-Coruña-(J1)')
+        estropada = json.loads(rv.data.decode('utf-8'))
+        assert len(estropada['bi_eguneko_sailkapena']) == 12
+        for sailk in estropada['bi_eguneko_sailkapena']:
+            if sailk['talde_izena'] == 'GO FIT HONDARRIBIA':
+                assert sailk['denbora_batura'] == '41:22,44'
+
+    def test_estropada_with_two_day_sailkapena_still_unplayed(self, estropadakApp, two_day_competition):
+        rv = estropadakApp.get('/estropadak/2021-06-01_ACT_J1')
+        estropada = json.loads(rv.data.decode('utf-8'))
+        assert len(estropada['bi_eguneko_sailkapena']) == 0
+        assert estropada['bi_eguneko_sailkapena'] == []
+        assert estropada['related_estropada'] == '2021-06-02_ACT_J2'
+        assert estropada['jardunaldia'] == 1
