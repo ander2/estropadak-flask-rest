@@ -23,7 +23,7 @@ emaitza_model = api.model('Emaitza estropadan', {
     'kategoria': fields.String(),
 })
 
-emaitza_partziala_model = api.model('Emaitza estropadan', {
+bi_eguneko_emaitza_model = api.model('Emaitza estropadan', {
     'lehen_jardunaldiko_denbora': fields.String(),
     'bigarren_jardunaldiko_denbora': fields.String(),
     'denbora_batura': fields.String(),
@@ -40,7 +40,7 @@ estropada_model = api.model('Estropada', {
     'sailkapena': fields.List(fields.Nested(emaitza_model)),
     'bi_jardunaldiko_bandera': fields.Boolean(default=False),
     'jardunaldia': fields.Integer(),
-    'bi_eguneko_sailkapena': fields.List(fields.Nested(emaitza_partziala_model)),
+    'bi_eguneko_sailkapena': fields.List(fields.Nested(bi_eguneko_emaitza_model)),
     'related_estropada': fields.String(),
     'urla': fields.String(min_length=8),
     'puntuagarria': fields.Boolean(required=False, default=True),
