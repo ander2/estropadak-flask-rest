@@ -1,4 +1,4 @@
-FROM python:3.9.9
+FROM python:3.9.9-slim
 COPY ./requirements.txt /tmp/
 COPY ./EstropadakParser-0.1.13.tar.gz /tmp/
 ADD . /opt/webapp/
