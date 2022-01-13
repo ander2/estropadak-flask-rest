@@ -1,5 +1,6 @@
 import logging
 import datetime
+from sys import exc_info
 import app.config
 
 from flask_restx import Namespace, Resource, fields
@@ -126,6 +127,8 @@ class EstropadakDAO:
                 doc['related_estropada'] = estropada['related_estropada']
             if estropada.get('jardunaldia'):
                 doc['jardunaldia'] = estropada['jardunaldia']
+            if len(estropada.get('kategoriak', [])):
+                doc['kategoriak'] = estropada['kategoriak']
             doc.save()
 
     @staticmethod
@@ -141,7 +144,14 @@ class EstropadakLogic():
 
     @staticmethod
     def create_estropada(estropada):
-        data = datetime.datetime.strptime(estropada['data'], '%Y-%m-%d %H:%M')
+        data = None
+        try:
+            data = datetime.datetime.fromisoformat(estropada['data'])
+            logging.info(data)
+        except ValueError:
+            data = datetime.datetime.strptime(estropada['data'], '%Y-%m-%d %H:%M')
+            estropada['data'] = data.isoformat()
+
         izena = estropada['izena'].replace(' ', '-')
 
         if estropada["liga"] == 'EUSKOTREN':
@@ -218,11 +228,15 @@ class Estropadak(Resource):
     @api.response(400, 'Validation Error')
     def post(self):
         data = api.payload
-        doc_created = EstropadakLogic.create_estropada(data)
-        if doc_created:
-            return {}, 201  # , "Estropada created"
-        else:
-            return {}, 400  # , "Cannot create estropada"
+        try:
+            doc_created = EstropadakLogic.create_estropada(data)
+            if doc_created:
+                return {}, 201  # , "Estropada created"
+            else:
+                return {}, 400  # , "Cannot create estropada"
+        except Exception as e:
+            logging.error("Error while creating an estropada", exc_info=1)
+            return str(e), 400
 
 
 @api.route('/<string:estropada_id>')

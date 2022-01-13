@@ -114,7 +114,7 @@ class EmaitzakDAO:
 
     @staticmethod
     def insert_emaitza_into_db(emaitza):
-        data = datetime.datetime.strptime(emaitza['estropada_data'], '%Y-%m-%d %H:%M')
+        data = datetime.datetime.fromisoformat(emaitza['estropada_data'])
         talde_izen_normalizatua = TaldeakDAO.get_talde_izen_normalizatua(emaitza['talde_izena'])
         izena = talde_izen_normalizatua.replace(' ', '-')
         emaitza['_id'] = f'{data.strftime("%Y-%m-%d")}_{emaitza["liga"]}_{izena}'
@@ -163,6 +163,10 @@ class EmaitzakLogic:
             emaitza['liga'] = estropada['liga']
             talde_izen_normalizatua = TaldeakDAO.get_talde_izen_normalizatua(emaitza['talde_izena'])
             emaitza['talde_izen_normalizatua'] = talde_izen_normalizatua
+            # try:
+            #     emaitza['estropada_data'] = datetime.datetime.fromisoformat(estropada['data'])
+            # except ValueError:
+            #     emaitza['estropada_data'] = datetime.datetime.strptime(estropada['data'], '%Y-%m-%d %H:%M')
             EmaitzakDAO.insert_emaitza_into_db(emaitza)
         return True
 
