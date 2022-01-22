@@ -21,7 +21,7 @@ app.config['SECRET_KEY'] = JWT_SECRET_KEY
 app.config['PROPAGATE_EXCEPTIONS'] = True
 jwt = JWT(app, authenticate, identity)
 
-api = Api(app, version='0.3.3', title='Estropadak API',
+api = Api(app, version='0.3.6', title='Estropadak API',
           description='Estropadak API')
 
 
