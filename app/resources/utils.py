@@ -1,6 +1,7 @@
 import logging
 import app.config
 import datetime
+import textdistance
 
 from estropadakparser.estropada.estropada import Estropada, TaldeEmaitza
 from flask_restx import reqparse
@@ -61,6 +62,7 @@ def get_team_color(team: str):
         'San Juan': 'pink',
         'San Pedro': 'purple',
         'Tiran': 'blue',
+        'Tolosaldea': 'blue',
         'Urdaibai': 'blue',
         'Zarautz': 'blue',
         'Zumaia': 'red',
@@ -70,9 +72,14 @@ def get_team_color(team: str):
         return colors[team]
     except KeyError:
         try:
-            if team.endswith((' A', ' B', ' C', ' D')):
-                team = team[:-2]
-            return colors[team.capitalize()]
+            s = 0
+            color = 'blue'
+            for k, v in colors.items():
+                simmilarity = textdistance.hamming.similarity(k, team.capitalize())
+                if simmilarity > s:
+                    s = simmilarity
+                    color = v
+            return color
         except KeyError:
             return 'blue'
  
