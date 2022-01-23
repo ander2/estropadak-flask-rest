@@ -1,4 +1,5 @@
 import logging
+import textdistance
 from app.db_connection import get_db_connection
 from flask_restx import Namespace, Resource, fields
 from .utils import required_league_year_parser
@@ -63,7 +64,7 @@ class TaldeakDAO:
             return taldea
 
     @staticmethod
-    def get_taldeak(league, year=None):
+    def get_taldeak(league, year=None, category=None):
         league = league.upper()
 
         taldeak = []
@@ -71,12 +72,25 @@ class TaldeakDAO:
             try:
                 all_teams = database['talde_izenak2']
                 if year is not None:
-                    resume = database[f'rank_{league}_{year}']
+                    key = f'rank_{league}_{year}'
+                    if category:
+                        key = f'rank_{league}_{year}_{category.lower()}'
+                    resume = database[key]
                     for taldea in resume['stats'].keys():
+                        try:
+                            short = all_teams[taldea.title()].get('acronym')
+                        except KeyError:
+                            s = 0
+                            for k in all_teams.keys():
+                                simmilarity = textdistance.hamming.similarity(k, taldea.capitalize())
+                                if simmilarity > s:
+                                    s = simmilarity
+                                    team = k
+                            short = all_teams[team].get('acronym') + taldea[-2]
                         taldeak.append({
                             "name": taldea,
-                            "alt_names": all_teams[taldea].get('alt_names'),
-                            "short": all_teams[taldea].get('acronym')
+                            "alt_names": all_teams.get(taldea, {}).get('alt_names', [taldea]),
+                            "short": short
                         })
                 else:
                     league = league.lower()
@@ -110,7 +124,10 @@ class Taldeak(Resource):
         teams = []
         league = args.get('league')
         year = args.get('year')
-        teams = TaldeakDAO.get_taldeak(league, year)
+        category = args.get('category')
+        if league.upper() not in ('GBL', 'GTL', 'BBL', 'BTL'):
+            category = None
+        teams = TaldeakDAO.get_taldeak(league, year, category)
         return teams
 
 

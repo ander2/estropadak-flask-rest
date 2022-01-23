@@ -40,6 +40,7 @@ required_league_year_parser.add_argument('league',
                                          type=str, choices=app.config.LEAGUES,
                                          case_sensitive=False, required=True)
 required_league_year_parser.add_argument('year', type=int, required=False)
+required_league_year_parser.add_argument('category', type=str, required=False)
 
 
 def get_team_color(team: str):
