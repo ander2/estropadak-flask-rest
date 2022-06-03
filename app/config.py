@@ -30,5 +30,18 @@ if 'COUCHDB_PORT' in os.environ:
 
 JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
 MIN_YEAR = 2002
-LEAGUES = ['ACT', 'ARC1', 'ARC2', 'EUSKOTREN', 'ETE', 'GBL', 'BBL', 'TXAPELKETAK', 'GTL', 'BTL', 'KONTXA']
+LEAGUES = [
+    'ACT', 
+    'ARC1', 
+    'ARC2', 
+    'EUSKOTREN', 
+    'ETE', 
+    'GBL', 
+    'BBL', 
+    'TXAPELKETAK', 
+    'GTL', 
+    'BTL', 
+    'KONTXA'
+]
+CATEGORIES = ['IG', 'IN', 'PG', 'PN', 'JG', 'JN', 'SG', 'SN']
 PAGE_SIZE = 50

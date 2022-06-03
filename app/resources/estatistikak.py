@@ -78,7 +78,7 @@ class EstatistikakLogic():
             estropadak = EstropadakDAO.get_estropadak_by_league_year(
                 league,
                 year)
-            estropadak = [estropada for estropada in estropadak if not estropada['izena'].startswith('Play')]
+            estropadak = [estropada for estropada in estropadak if not estropada['izena'].startswith('Play') and estropada.get('puntuagarria', True)]
             for taldea, stats in sailkapena['stats'].items():
                 team_values = {
                     "key": taldea,
@@ -111,11 +111,29 @@ class EstatistikakLogic():
                     "key": taldea,
                     "color": get_team_color(taldea),
                 }
-                values = [{
-                    "label": val[1]['izena'],
-                    "x": i,
-                    "value": points_max - val[0] + 1}
-                    for i, val in enumerate(zip(stats['positions'], estropadak))]
+                if not category:
+                    values = [{
+                        "label": val[1]['izena'],
+                        "x": i,
+                        "value": points_max - val[0] + 1}
+                        for i, val in enumerate(zip(stats['positions'], estropadak))]
+                else:
+                    points_max = stats['points'] + stats.get('discard', 0)
+                    points = []
+                    cumulative = [0] + stats['cumulative']
+                    for i, point in enumerate(cumulative):
+                        try:
+                            points.append(cumulative[i + 1] - point)
+                        except:
+                            # points.append(points_max - point)
+                            break
+                    values = [{
+                        "label": val[1]['izena'],
+                        "x": i,
+                        "value": val[0]}
+                        for i, val in enumerate(zip(points, estropadak))]
+                    # }]
+
                 team_values["values"] = values
                 result.append(team_values)
         return result

@@ -57,6 +57,8 @@ class EstropadakDAO:
             try:
                 estropada = database[id]
                 estropada['data'] = estropada['data'].replace(' ', 'T')
+                if estropada['liga'] == 'euskotren':
+                    estropada['liga'] = estropada['liga'].upper()
             except TypeError:
                 logging.error("Not found", exc_info=1)
                 estropada = None
@@ -99,6 +101,8 @@ class EstropadakDAO:
                 for row in estropadak['rows']:
                     estropada = row['doc']
                     estropada['data'] = estropada['data'].replace(' ', 'T')
+                    if estropada['liga'] == 'euskotren':
+                        estropada['liga'] = estropada['liga'].upper()
                     result.append(estropada)
                 return result
             except KeyError:
@@ -106,7 +110,8 @@ class EstropadakDAO:
 
     @staticmethod
     def insert_estropada_into_db(estropada):
-        logging.info(estropada)
+        if estropada['liga'] == 'EUSKOTREN':
+            estropada['liga'] = estropada['liga'].lower()
         with get_db_connection() as database:
             document = database.create_document(estropada)
             return document.exists()
@@ -118,6 +123,8 @@ class EstropadakDAO:
             doc['izena'] = estropada['izena']
             doc['data'] = estropada['data']
             doc['liga'] = estropada['liga']
+            if doc['liga'] == 'EUSKOTREN':
+                estropada['liga'] = estropada['liga'].lower()
             doc['lekua'] = estropada['lekua']
             doc['sailkapena'] = estropada['sailkapena']
             doc['type'] = estropada['type']

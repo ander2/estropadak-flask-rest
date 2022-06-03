@@ -104,6 +104,12 @@ class TestEstropadak():
         rv = estropadakApp.get('/estropadak?league=actt&year=2010')
         assert rv.status_code == 400
 
+    def testEstropadakListWithEuskotrenLeague(self, estropadakApp):
+        rv = estropadakApp.get('/estropadak?league=EUSKOTREN&year=2020')
+        assert rv.status_code == 200
+        estropadak = json.loads(rv.data.decode('utf-8'))
+        assert len(estropadak) == 14
+
     def testEstropadakWithoutParams(self, estropadakApp):
         rv = estropadakApp.get('/estropadak')
         assert rv.status_code == 200
@@ -137,6 +143,18 @@ class TestEstropadak():
             "izena": "Estropada test",
             "data": "2021-06-01 17:00",
             "liga": "ACT",
+            "sailkapena": [],
+            "lekua": "Nonbait"
+        }, headers=[('Authorization', f'JWT {token}')])
+        assert rv.status_code == 201
+
+    def testEstropadaCreationWithCredentialsEuskotrenLiga(self, estropadakApp, credentials):
+        rv = estropadakApp.post('/auth', json=credentials)
+        token = rv.json['access_token']
+        rv = estropadakApp.post('/estropadak', json={
+            "izena": "Estropada test",
+            "data": "2021-06-01 17:00",
+            "liga": "EUSKOTREN",
             "sailkapena": [],
             "lekua": "Nonbait"
         }, headers=[('Authorization', f'JWT {token}')])
