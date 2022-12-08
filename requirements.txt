@@ -4,7 +4,7 @@ astroid==2.4.2
 attrs==19.3.0
 bidict==0.21.2
 billiard==3.5.0.2
-certifi==2020.12.5
+certifi==2022.12.7
 chardet==4.0.0
 click==6.6
 cloudant==2.14.0
