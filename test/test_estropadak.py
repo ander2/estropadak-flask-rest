@@ -97,13 +97,16 @@ def testEstropadakList(estropadakApp):
     assert estropadak[0]["lekua"] == "Bilbao Bizkaia"
     assert estropadak[0]["kategoriak"] == []
 
+
 def testEstropadakListWithoutResults(estropadakApp):
     rv = estropadakApp.get('/estropadak?league=act&year=1900')
     assert rv.status_code == 400
 
+
 def testEstropadakListWithWrongLeague(estropadakApp):
     rv = estropadakApp.get('/estropadak?league=actt&year=2010')
     assert rv.status_code == 400
+
 
 def testEstropadakListWithEuskotrenLeague(estropadakApp):
     rv = estropadakApp.get('/estropadak?league=EUSKOTREN&year=2020')
@@ -111,9 +114,11 @@ def testEstropadakListWithEuskotrenLeague(estropadakApp):
     estropadak = json.loads(rv.data.decode('utf-8'))
     assert len(estropadak) == 14
 
+
 def testEstropadakWithoutParams(estropadakApp):
     rv = estropadakApp.get('/estropadak')
     assert rv.status_code == 200
+
 
 def testEstropadakWithBadPaginationParams(estropadakApp):
     rv = estropadakApp.get('/estropadak?page=r')
@@ -121,21 +126,25 @@ def testEstropadakWithBadPaginationParams(estropadakApp):
     rv = estropadakApp.get('/estropadak?count=r')
     assert rv.status_code == 400
 
+
 def testEstropadakWithDefaultPaginationParams(estropadakApp):
     rv = estropadakApp.get('/estropadak')
     assert rv.status_code == 200
     print(rv.get_json())
     assert len(rv.get_json()) == 50
 
+
 def testEstropada(estropadakApp):
     rv = estropadakApp.get('/estropadak/1c79d46b8c74ad399d54fd7ee40005e3')
     estropada = json.loads(rv.data.decode('utf-8'))
     assert estropada['izena'] == 'III Bandera Euskadi Basque Country'
 
+
 def testEstropadaNotFound(estropadakApp):
     rv = estropadakApp.get('/estropadak/fuck')
     # estropada = json.loads(rv.data.decode('utf-8'))
     assert rv.status_code == 404
+
 
 def testEstropadaCreationWithCredentials(estropadakApp, credentials):
     rv = estropadakApp.post('/auth', json=credentials)
@@ -149,6 +158,7 @@ def testEstropadaCreationWithCredentials(estropadakApp, credentials):
     }, headers=[('Authorization', f'JWT {token}')])
     assert rv.status_code == 201
 
+
 def testEstropadaCreationWithCredentialsEuskotrenLiga(estropadakApp, credentials):
     rv = estropadakApp.post('/auth', json=credentials)
     token = rv.json['access_token']
@@ -161,6 +171,7 @@ def testEstropadaCreationWithCredentialsEuskotrenLiga(estropadakApp, credentials
     }, headers=[('Authorization', f'JWT {token}')])
     assert rv.status_code == 201
 
+
 def testEstropadaCreationWithoutCredentials(estropadakApp, credentials, clean_up):
     rv = estropadakApp.post('/estropadak', json={
         "izena": "Estropada test",
@@ -170,6 +181,7 @@ def testEstropadaCreationWithoutCredentials(estropadakApp, credentials, clean_up
     })
     assert rv.status_code == 401
 
+
 def testEstropadaModificationWithoutCredentials(estropadakApp, credentials):
     rv = estropadakApp.put('/estropadak/2021_act_estropada', json={
         "izena": "Estropada test",
@@ -178,6 +190,7 @@ def testEstropadaModificationWithoutCredentials(estropadakApp, credentials):
         "sailkapena": [],
     })
     assert rv.status_code == 401
+
 
 def testEstropadaModificationWithCredentials(estropadakApp, credentials, clean_up):
     rv = estropadakApp.post('/auth', json=credentials)
@@ -204,6 +217,7 @@ def testEstropadaModificationWithCredentials(estropadakApp, credentials, clean_u
     recovered_doc['lekua'] == 'Nonbait'
     recovered_doc['sailkapena'] == []
 
+
 def testEstropadaDeletionWithoutCredentials(estropadakApp, credentials, clean_up):
     rv = estropadakApp.post('/auth', json=credentials)
     token = rv.json['access_token']
@@ -217,6 +231,7 @@ def testEstropadaDeletionWithoutCredentials(estropadakApp, credentials, clean_up
     rv = estropadakApp.delete('/estropadak/2021-06-02_ARC1_Estropada-test4')
     assert rv.status_code == 401
 
+
 def testEstropadaDeletionWithCredentials(estropadakApp, credentials):
     rv = estropadakApp.post('/auth', json=credentials)
     token = rv.json['access_token']
@@ -227,8 +242,10 @@ def testEstropadaDeletionWithCredentials(estropadakApp, credentials):
         "sailkapena": []
     }, headers=[('Authorization', f'JWT {token}')])
     assert rv.status_code == 201
-    rv = estropadakApp.delete('/estropadak/2021-06-02_ARC1_Estropada-test3', headers=[('Authorization', f'JWT {token}')])
+    rv = estropadakApp.delete('/estropadak/2021-06-02_ARC1_Estropada-test3',
+                              headers=[('Authorization', f'JWT {token}')])
     assert rv.status_code == 200
+
 
 def testEstropadaCreationWithMissingDataInModel(estropadakApp, credentials):
     rv = estropadakApp.post('/auth', json=credentials)
@@ -255,6 +272,7 @@ def testEstropadaCreationWithMissingDataInModel(estropadakApp, credentials):
     }, headers=[('Authorization', f'JWT {token}')])
     assert rv.status_code == 400
 
+
 def testEstropadaCreationWithUnsupportedLiga(estropadakApp, credentials):
     rv = estropadakApp.post('/auth', json=credentials)
     token = rv.json['access_token']
@@ -265,6 +283,7 @@ def testEstropadaCreationWithUnsupportedLiga(estropadakApp, credentials):
         "sailkapena": []
     }, headers=[('Authorization', f'JWT {token}')])
     assert rv.status_code == 400
+
 
 def testEstropadaCreationWithSailkapena(estropadakApp, credentials):
     rv = estropadakApp.post('/auth', json=credentials)
@@ -294,6 +313,7 @@ def testEstropadaCreationWithSailkapena(estropadakApp, credentials):
     rv = estropadakApp.get('/emaitzak/2021-06-01_ACT_Kaiku')
     assert rv.status_code == 200
 
+
 def test_estropada_with_two_day_sailkapena(estropadakApp):
     rv = estropadakApp.get('/estropadak/2021-07-03_ACT_V-Bandeira-cidade-da-Coruña-(J1)')
     estropada = json.loads(rv.data.decode('utf-8'))
@@ -301,6 +321,7 @@ def test_estropada_with_two_day_sailkapena(estropadakApp):
     for sailk in estropada['bi_eguneko_sailkapena']:
         if sailk['talde_izena'] == 'GO FIT HONDARRIBIA':
             assert sailk['denbora_batura'] == '41:22,44'
+
 
 def test_estropada_with_two_day_sailkapena_still_unplayed(estropadakApp, two_day_competition):
     rv = estropadakApp.get('/estropadak/2021-06-01_ACT_J1')

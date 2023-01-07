@@ -5,7 +5,7 @@ import app.config
 from flask_restx import Namespace, Resource, fields
 from flask_jwt import jwt_required
 from ..dao.estropadak_dao import EstropadakDAO
-from .common.parsers import league_year_parser
+from common.parsers import league_year_parser
 from .emaitzak import EmaitzakLogic
 from .urteak import YearsDAO
 
@@ -99,7 +99,10 @@ class EstropadakLogic():
                     try:
                         denb1 = datetime.datetime.strptime(denbora, '%M:%S,%f')
                         denb2 = datetime.datetime.strptime(denborak_bi[taldea], '%M:%S,%f')
-                        delta = datetime.timedelta(minutes=denb2.minute, seconds=denb2.second, microseconds=denb2.microsecond)
+                        delta = datetime.timedelta(
+                            minutes=denb2.minute,
+                            seconds=denb2.second,
+                            microseconds=denb2.microsecond)
                         totala = denb1 + delta
                         totala_str = totala.strftime('%M:%S,%f')[:-4]
                     except ValueError:
@@ -111,7 +114,9 @@ class EstropadakLogic():
                         'bigarren_jardunaldiko_denbora': denborak_bi[taldea],
                         'denbora_batura': totala_str,
                     })
-                    estropada['bi_eguneko_sailkapena'] = sorted(estropada['bi_eguneko_sailkapena'], key=lambda x: x['denbora_batura'])
+                    estropada['bi_eguneko_sailkapena'] = sorted(
+                        estropada['bi_eguneko_sailkapena'],
+                        key=lambda x: x['denbora_batura'])
                     for ind, item in enumerate(estropada['bi_eguneko_sailkapena']):
                         item['posizioa'] = ind + 1
         return estropada

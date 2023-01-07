@@ -36,7 +36,11 @@ class EstatistikakLogic():
             estropadak = EstropadakDAO.get_estropadak_by_league_year(
                 league,
                 year)
-            estropadak = [estropada for estropada in estropadak if not estropada['izena'].startswith('Play') and estropada.get('puntuagarria', True)]
+            estropadak = [
+                estropada for estropada in estropadak
+                if not estropada['izena'].startswith('Play')
+                and estropada.get('puntuagarria', True)
+            ]
             for taldea, stats in sailkapena['stats'].items():
                 team_values = {
                     "key": taldea,
@@ -82,7 +86,7 @@ class EstatistikakLogic():
                     for i, point in enumerate(cumulative):
                         try:
                             points.append(cumulative[i + 1] - point)
-                        except:
+                        except Exception:
                             # points.append(points_max - point)
                             break
                     values = [{
@@ -118,7 +122,10 @@ class EstatistikakLogic():
         result = []
         if team is None:
             sailkapena = EstatistikakDAO.get_sailkapena_by_league_year(league, year, category)
-            sorted_teams = sorted(sailkapena['stats'], key=lambda tal: sailkapena['stats'][tal]['position'], reverse=False)
+            sorted_teams = sorted(
+                sailkapena['stats'],
+                key=lambda tal: sailkapena['stats'][tal]['position'],
+                reverse=False)
             rank = {
                 "key": 'Taldea',
                 "values": [{
@@ -186,24 +193,24 @@ class EstatistikakLogic():
                 "values": [{
                     "label": int(sailkapena['_id'][-4:]),
                     "value": sailkapena['stats'][team]['age']['min_age']
-                    } for sailkapena in sailkapenak if team in sailkapena['stats'] and 'age' in sailkapena['stats'][team]
-                ]
+                } for sailkapena in sailkapenak if team in sailkapena['stats']
+                           and 'age' in sailkapena['stats'][team]]
             }
             med_ages = {
                 "key": 'Media',
                 "values": [{
                     "label": int(sailkapena['_id'][-4:]),
                     "value": sailkapena['stats'][team]['age']['avg_age']
-                    } for sailkapena in sailkapenak if team in sailkapena['stats'] and 'age' in sailkapena['stats'][team]
-                ]
+                } for sailkapena in sailkapenak if team in sailkapena['stats']
+                           and 'age' in sailkapena['stats'][team]]
             }
             max_ages = {
                 "key": 'Max',
                 "values": [{
                     "label": int(sailkapena['_id'][-4:]),
                     "value": sailkapena['stats'][team]['age']['max_age']
-                    } for sailkapena in sailkapenak if team in sailkapena['stats'] and 'age' in sailkapena['stats'][team]
-                ]
+                } for sailkapena in sailkapenak if team in sailkapena['stats']
+                           and 'age' in sailkapena['stats'][team]]
             }
             result.append(min_ages)
             result.append(med_ages)
@@ -238,18 +245,20 @@ class EstatistikakLogic():
             altak = {
                 "key": 'Altak',
                 "values": [{
-                    "label": int(sailkapena['_id'][-4:]),
-                    "value": sailkapena['stats'][team]['rowers']['altak']
-                    } for sailkapena in sailkapenak if team in sailkapena['stats'] and 'rowers' in sailkapena['stats'][team]
-                ]
+                    "label":
+                    int(sailkapena['_id'][-4:]),
+                    "value":
+                    sailkapena['stats'][team]['rowers']['altak']
+                } for sailkapena in sailkapenak if team in sailkapena['stats']
+                           and 'rowers' in sailkapena['stats'][team]]
             }
             bajak = {
                 "key": 'Bajak',
                 "values": [{
                     "label": int(sailkapena['_id'][-4:]),
                     "value": sailkapena['stats'][team]['rowers']['bajak']
-                    } for sailkapena in sailkapenak if team in sailkapena['stats'] and 'rowers' in sailkapena['stats'][team]
-                ]
+                } for sailkapena in sailkapenak if team in sailkapena['stats']
+                           and 'rowers' in sailkapena['stats'][team]]
             }
             result.append(altak)
             result.append(bajak)

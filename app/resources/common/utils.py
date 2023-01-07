@@ -1,7 +1,7 @@
 import datetime
 import textdistance
 
-from estropadakparser.estropada.estropada import Estropada 
+from estropadakparser.estropada.estropada import Estropada
 from ...dao.taldeak_dao import TaldeakDAO
 
 
@@ -68,7 +68,7 @@ def get_team_color(team: str):
             return color
         except KeyError:
             return 'blue'
- 
+
 
 def create_id(estropada, emaitza, taldeak):
     data = datetime.datetime.strptime(estropada['data'], '%Y-%m-%d %H:%M')
