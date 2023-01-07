@@ -5,7 +5,7 @@ import app.config
 from flask_restx import Namespace, Resource, fields
 from flask_jwt import jwt_required
 from ..dao.estropadak_dao import EstropadakDAO
-from common.parsers import league_year_parser
+from .common.parsers import league_year_parser
 from .emaitzak import EmaitzakLogic
 from .urteak import YearsDAO
 
