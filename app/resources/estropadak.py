@@ -1,13 +1,13 @@
 import logging
 import datetime
-from sys import exc_info
 import app.config
 
 from flask_restx import Namespace, Resource, fields
 from flask_jwt import jwt_required
-from app.db_connection import get_db_connection
-from .utils import league_year_parser
+from ..dao.estropadak_dao import EstropadakDAO
+from .common.parsers import league_year_parser
 from .emaitzak import EmaitzakLogic
+from .urteak import YearsDAO
 
 
 api = Namespace('estropadak', description='')
@@ -48,103 +48,6 @@ estropada_model = api.model('Estropada', {
     'kategoriak': fields.List(fields.String(), required=False),
     'oharrak': fields.String(required=False)
 })
-
-
-class EstropadakDAO:
-    @staticmethod
-    def get_estropada_by_id(id):
-        with get_db_connection() as database:
-            try:
-                estropada = database[id]
-                estropada['data'] = estropada['data'].replace(' ', 'T')
-                if estropada['liga'] == 'euskotren':
-                    estropada['liga'] = estropada['liga'].upper()
-            except TypeError:
-                logging.error("Not found", exc_info=1)
-                estropada = None
-            except KeyError:
-                logging.error("Not found", exc_info=1)
-                estropada = None
-            return estropada
-
-    @staticmethod
-    def get_estropadak_by_league_year(league, year, page=0, count=app.config.PAGE_SIZE):
-        logging.info("League:%s and year: %s", league, year)
-        start = []
-        end = []
-        if league:
-            league = league.upper()
-            if league.lower() == 'euskotren':
-                league = league.lower()
-            start.append(league)
-            end.append(league)
-
-        if year:
-            yearz = "{}".format(year)
-            fyearz = "{}z".format(year)
-            start.append(yearz)
-            end.append(fyearz)
-        else:
-            end = ["{}z".format(league)]
-
-        with get_db_connection() as database:
-            try:
-                estropadak = database.get_view_result("estropadak", "all",
-                                                      raw_result=True,
-                                                      startkey=start,
-                                                      endkey=end,
-                                                      include_docs=True,
-                                                      reduce=False,
-                                                      skip=count*page,
-                                                      limit=count)
-                result = []
-                for row in estropadak['rows']:
-                    estropada = row['doc']
-                    estropada['data'] = estropada['data'].replace(' ', 'T')
-                    if estropada['liga'] == 'euskotren':
-                        estropada['liga'] = estropada['liga'].upper()
-                    result.append(estropada)
-                return result
-            except KeyError:
-                return {'error': 'Estropadak not found'}, 404
-
-    @staticmethod
-    def insert_estropada_into_db(estropada):
-        if estropada['liga'] == 'EUSKOTREN':
-            estropada['liga'] = estropada['liga'].lower()
-        with get_db_connection() as database:
-            document = database.create_document(estropada)
-            return document.exists()
-
-    @staticmethod
-    def update_estropada_into_db(estropada_id, estropada):
-        with get_db_connection() as database:
-            doc = database[estropada_id]
-            doc['izena'] = estropada['izena']
-            doc['data'] = estropada['data']
-            doc['liga'] = estropada['liga']
-            if doc['liga'] == 'EUSKOTREN':
-                estropada['liga'] = estropada['liga'].lower()
-            doc['lekua'] = estropada['lekua']
-            doc['sailkapena'] = estropada['sailkapena']
-            doc['type'] = estropada['type']
-            if estropada.get('bi_jardunaldiko_bandera'):
-                doc['bi_jardunaldiko_bandera'] = estropada['bi_jardunaldiko_bandera']
-            if estropada.get('related_estropada'):
-                doc['related_estropada'] = estropada['related_estropada']
-            if estropada.get('jardunaldia'):
-                doc['jardunaldia'] = estropada['jardunaldia']
-            if len(estropada.get('kategoriak', [])):
-                doc['kategoriak'] = estropada['kategoriak']
-            doc.save()
-
-    @staticmethod
-    def delete_estropada_from_db(estropada_id):
-        with get_db_connection() as database:
-            doc = database[estropada_id]
-            if doc.exists():
-                doc.fetch()
-                doc.delete()
 
 
 class EstropadakLogic():
@@ -213,6 +116,15 @@ class EstropadakLogic():
                         item['posizioa'] = ind + 1
         return estropada
 
+    def _validate_league_year(league: str, year: int) -> bool:
+        if not league and not year:
+            return True
+        all_years = YearsDAO.get_years_from_db()
+        if league in all_years:
+            return year in all_years[league]
+        else:
+            return False
+
 
 @api.route('/', strict_slashes=False)
 class Estropadak(Resource):
@@ -220,8 +132,8 @@ class Estropadak(Resource):
     @api.expect(league_year_parser, validate=True)
     def get(self):
         args = league_year_parser.parse_args()
-        if args.get('year') and args.get('year') < app.config.MIN_YEAR:
-            return "Year not found", 400
+        if not EstropadakLogic._validate_league_year(args.get('league'), args.get('year', 0)):
+            return f"Year ({args.get('year')}) not found in league ({args.get('league')})", 400
         estropadak = EstropadakDAO.get_estropadak_by_league_year(
             args['league'],
             args['year'],

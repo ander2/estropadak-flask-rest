@@ -1,10 +1,8 @@
-import logging
-import app.config
 import datetime
 import textdistance
 
-from estropadakparser.estropada.estropada import Estropada, TaldeEmaitza
-from flask_restx import reqparse
+from estropadakparser.estropada.estropada import Estropada 
+from ...dao.taldeak_dao import TaldeakDAO
 
 
 def normalize_id(row):
@@ -28,19 +26,6 @@ def estropadak_transform(row):
     izena = document.pop('izena')
     estropada = Estropada(izena, **document)
     return estropada
-
-league_year_parser = reqparse.RequestParser()
-league_year_parser.add_argument('league', type=str, choices=app.config.LEAGUES, case_sensitive=False)
-league_year_parser.add_argument('year', type=int)
-league_year_parser.add_argument('page', type=int, help="Page number", default=0)
-league_year_parser.add_argument('count', type=int, help="Elements per page", default=app.config.PAGE_SIZE)
-
-required_league_year_parser = reqparse.RequestParser()
-required_league_year_parser.add_argument('league',
-                                         type=str, choices=app.config.LEAGUES,
-                                         case_sensitive=False, required=True)
-required_league_year_parser.add_argument('year', type=int, required=False)
-required_league_year_parser.add_argument('category', type=str, required=False)
 
 
 def get_team_color(team: str):
@@ -88,7 +73,7 @@ def get_team_color(team: str):
 def create_id(estropada, emaitza, taldeak):
     data = datetime.datetime.strptime(estropada['data'], '%Y-%m-%d %H:%M')
     if emaitza is not None:
-        taldea = get_talde_izena(emaitza["talde_izena"])
+        taldea = TaldeakDAO.get_talde_izena(emaitza["talde_izena"])
         id = f'{data.strftime("%Y-%m-%d")}_{estropada["liga"]}_{taldea}'
     else:
         izena = estropada['izena'].replace(' ', '-')

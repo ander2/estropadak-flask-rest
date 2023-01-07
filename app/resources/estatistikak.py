@@ -1,54 +1,12 @@
-import app.config
+import logging
 
-from app.db_connection import get_db_connection
-from .utils import get_team_color
-from flask_restx import Namespace, Resource, reqparse
+from .common.utils import get_team_color
+from flask_restx import Namespace, Resource
+from .common.parsers import estatistikak_parser
 from .estropadak import EstropadakDAO
+from ..dao.estatistikak_dao import EstatistikakDAO
 
 api = Namespace('estatistikak', description='')
-
-
-class EstatistikakDAO:
-    @staticmethod
-    def get_sailkapena_by_league_year(league, year, category):
-        if league in ['gbl', 'bbl', 'btl', 'gtl']:
-            _category = category.replace(' ', '_').lower()
-            key = 'rank_{}_{}_{}'.format(league.upper(), year, _category)
-        else:
-            key = 'rank_{}_{}'.format(league.upper(), year)
-        with get_db_connection() as database:
-            try:
-                doc = database[key]
-            except KeyError:
-                return None
-            result = doc
-            return result
-
-    @staticmethod
-    def get_sailkapenak_by_league(league):
-        key = 'rank_{}'.format(league.upper())
-        league = league.upper()
-        if league.lower() == 'euskotren':
-            league = league.lower()
-        endkey = "{}z".format(key)
-
-        start = key
-        end = endkey
-        with get_db_connection() as database:
-            try:
-                ranks = database.get_view_result("estropadak", "rank",
-                                raw_result=True,
-                                startkey=start,
-                                endkey=end,
-                                include_docs=True,
-                                reduce=False)
-                result = []
-                for rank in ranks['rows']:
-                    result.append(rank['doc'])
-                return result
-            except KeyError:
-                return {'error': 'Estropadak not found'}, 404
-            return result
 
 
 class EstatistikakLogic():
@@ -67,7 +25,7 @@ class EstatistikakLogic():
                     values = [{
                         "label": urtea,
                         "x": i,
-                        "value": val }
+                        "value": val}
                         for i, val in enumerate(sailkapena['stats'][team]['cumulative'])]
                     year_values["values"] = values
                     result.append(year_values)
@@ -188,10 +146,12 @@ class EstatistikakLogic():
     @staticmethod
     def get_ages(league: str, year: int, team: str):
         result = []
+        logging.info(f'Got team {league} {year} {team}')
         if team is None:
             sailkapena = EstatistikakDAO.get_sailkapena_by_league_year(league, year, None)
-            if not sailkapena or not sailkapena.get('stats', {}).get('age'):
+            if not sailkapena or not sailkapena.get('stats', []):
                 return result
+            logging.info('Got sailkapena')
             min_ages = {
                 "key": 'Min',
                 "values": [{
@@ -296,25 +256,18 @@ class EstatistikakLogic():
         return result
 
 
-parser = reqparse.RequestParser()
-parser.add_argument('league', type=str, required=True, choices=app.config.LEAGUES, case_sensitive=False)
-parser.add_argument('year', type=int)
-parser.add_argument('team', type=str)
-parser.add_argument('category', type=str)
-parser.add_argument('stat', type=str, default='cumulative')
-
-
 @api.route('/', strict_slashes=False)
 class Estatistikak(Resource):
-    @api.expect(parser, validate=True)
+    @api.expect(estatistikak_parser, validate=True)
     def get(self):
         result = []
-        args = parser.parse_args()
+        args = estatistikak_parser.parse_args()
         year = args.get('year')
         team = args.get('team')
         league = args.get('league')
         category = args.get('category')
         stat_type = args.get('stat')
+        logging.info(f'Stat {stat_type}*{team}*')
         if stat_type == 'cumulative':
             result = EstatistikakLogic.get_culumative_stats(league, year, team, category)
         elif stat_type == 'points':
