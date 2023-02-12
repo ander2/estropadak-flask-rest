@@ -37,7 +37,7 @@ class EstatistikakLogic():
                 league,
                 year)
             estropadak = [
-                estropada for estropada in estropadak
+                estropada for estropada in estropadak['docs']
                 if not estropada['izena'].startswith('Play')
                 and estropada.get('puntuagarria', True)
             ]
@@ -56,7 +56,10 @@ class EstatistikakLogic():
             result = sorted(result, key=lambda x: x['values'][-1]['value'])
         except IndexError:
             pass
-        return result
+        return {
+            'total': len(result),
+            'docs': result
+        }
 
     @staticmethod
     def get_points_per_race(league: str, year: int, category: str):
@@ -65,7 +68,7 @@ class EstatistikakLogic():
         estropadak = EstropadakDAO.get_estropadak_by_league_year(
             league,
             year)
-        estropadak = [estropada for estropada in estropadak if not estropada['izena'].startswith('Play')]
+        estropadak = [estropada for estropada in estropadak['docs'] if not estropada['izena'].startswith('Play')]
         if sailkapena:
             points_max = len(sailkapena['stats'])
             for taldea, stats in sailkapena['stats'].items():
