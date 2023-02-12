@@ -8,30 +8,38 @@ def estropadakApp():
     return app.test_client()
 
 
-def testSailkapenaWithLoweCaseLeague(estropadakApp):
+def test_sailkapena_with_lowercase_league(estropadakApp):
     rv = estropadakApp.get('/sailkapenak?league=act&year=2017')
     sailkapena = json.loads(rv.data.decode('utf-8'))
-    assert len(sailkapena[0]['stats'].keys()) == 12
+    assert sailkapena['total'] == 1
+    assert len(sailkapena['docs'][0]['stats']) == 12
 
 
-def testSailkapenaWithUpperCaseLeague(estropadakApp):
+def test_sailkapena_with_uppercase_league(estropadakApp):
     rv = estropadakApp.get('/sailkapenak?league=act&year=2017')
     sailkapena = json.loads(rv.data.decode('utf-8'))
-    assert len(sailkapena[0]['stats'].keys()) == 12
+    assert sailkapena['total'] == 1
+    assert len(sailkapena['docs'][0]['stats']) == 12
 
 
-def testSailkapenaForTeam(estropadakApp):
+def test_sailkapena_for_team(estropadakApp):
     rv = estropadakApp.get('/sailkapenak?league=act&year=2017&team=Orio')
-    sailkapena = json.loads(rv.data.decode('utf-8'))
+    sailkapena = rv.json
     keys = ['wins', 'positions', 'position', 'points', 'best', 'worst', 'cumulative', 'age', 'rowers']
-    print(sailkapena)
-    assert all(izenburua in keys for izenburua in sailkapena[0]['stats']['Orio'].keys())
+    assert sailkapena['total'] == 1
+    team_is_there = False
+    for stat in sailkapena['docs'][0]['stats']:
+        if stat['name'] == 'Orio':
+            team_is_there = True
+            assert all(izenburua in keys for izenburua in stat['value'].keys())
+    assert team_is_there
 
 
-def testSailkapenaForTeamThatNotExists(estropadakApp):
+def test_sailkapena_for_team_that_not_exists(estropadakApp):
     rv = estropadakApp.get('/sailkapenak?league=act&team=Oria')
     assert rv.status_code == 200
-    assert json.loads(rv.data) == []
+    assert rv.json['total'] == 0
+    assert rv.json['docs'] == []
 
 
 def testSailkapenaForTeamWithYearThatNotExists(estropadakApp):

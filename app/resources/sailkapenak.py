@@ -1,8 +1,9 @@
 import logging
-import app.config
 
+from typing import List
 from flask_restx import Namespace, Resource, reqparse, fields
 from flask_jwt import jwt_required
+from ..config import LEAGUES, MIN_YEAR
 from ..dao.sailkapenak_dao import SailkapenakDAO
 
 api = Namespace('sailkapenak', description='')
@@ -32,8 +33,18 @@ team_rank_model = api.model('Rank', {
 sailkapena_model = api.model('Sailkapena', {
     'id': fields.String(required=False, readonly=True),
     'stats': fields.List(fields.Nested(team_rank_model)),
-    'league': fields.String(required=True, description="Ranking league", enum=app.config.LEAGUES),
+    'league': fields.String(required=True, description="Ranking league", enum=LEAGUES),
     'year': fields.Integer(required=True, description="Ranking year")
+})
+
+sailkapenak_model = api.model('Sailkapenak', {
+    'id': fields.String(required=False, readonly=True),
+    'stats': fields.Nested(team_rank_model),
+})
+
+sailkapenak_list_model = api.model('Sailkapena listing model', {
+    'docs': fields.List(fields.Nested(sailkapena_model)),
+    'total': fields.Integer(example=1)
 })
 
 
@@ -49,6 +60,37 @@ class SailkapenakLogic():
         }
         res = SailkapenakDAO.insert_sailkapena_into_db(new_doc)
         return res
+
+    @staticmethod
+    def get_sailkapenak(league: str, year:int, teams: List[str], category):
+        stats = None
+        if year is None:
+            stats = SailkapenakDAO.get_sailkapena_by_league(league)
+        else:
+            if year and year < MIN_YEAR:
+                return "Year not found", 400
+            stats = SailkapenakDAO.get_sailkapena_by_league_year(league, year, category)
+        if stats is None:
+            return {'total': 0, 'docs': []}
+
+        if len(teams) > 0:
+            team_stats = SailkapenakDAO.get_sailkapenak_by_teams(league, year, teams)
+            return team_stats
+
+        else:
+            res = []
+            for stat in stats['docs']:
+                res.append({
+                    "id": stat['_id'],
+                    "year": int(stat['_id'][-4:]),
+                    "league": stat['_id'][5:9],
+                    "stats": [{'name': k, 'value': v} for k, v in stat['stats'].items()]
+                })
+            result = {
+                'total': stats['total'],
+                'docs': res
+            }
+            return result
 
     @staticmethod
     def get_sailkapena_by_id(sailkapena_id):
@@ -79,7 +121,7 @@ class SailkapenakLogic():
 
 
 parser = reqparse.RequestParser()
-parser.add_argument('league', type=str, required=True, choices=app.config.LEAGUES, case_sensitive=False)
+parser.add_argument('league', type=str, required=True, choices=LEAGUES, case_sensitive=False)
 parser.add_argument('year', type=int)
 parser.add_argument('team', type=str, action="append", default=[])
 parser.add_argument('category', type=str)
@@ -88,40 +130,15 @@ parser.add_argument('category', type=str)
 @api.route('/', strict_slashes=False)
 class Sailkapenak(Resource):
     @api.expect(parser, validate=True)
+    @api.marshal_with(sailkapenak_list_model, skip_none=True)
     def get(self):
-        stats = None
         args = parser.parse_args()
-        if args.get('year') is None:
-            stats = SailkapenakDAO.get_sailkapena_by_league(args['league'])
-        else:
-            if args.get('year') and args.get('year') < app.config.MIN_YEAR:
-                return "Year not found", 400
-            stats = SailkapenakDAO.get_sailkapena_by_league_year(args['league'], args['year'], args['category'])
-        if stats is None:
-            return []
-
-        if len(args.get('team', [])) > 0:
-            team_stats = []
-            for stat in stats:
-                try:
-                    team_stats.append({
-                        "id": stat['_id'],
-                        "urtea": int(stat['_id'][-4:]),
-                        "stats": {t: stat['stats'][t] for t in args['team']}
-                    })
-                except KeyError as e:
-                    logging.info('Team "%s" not found: %s', args['team'], e)
-                    # return "Team not found", 400
-            return team_stats
-        else:
-            result = [
-                {
-                    "id": stats[0]['_id'],
-                    "urtea": args['year'],
-                    "stats": stats[0]['stats']
-                }
-            ]
-            return result
+        league = args['league']
+        year = args['year']
+        team = args['team']
+        category = args['category']
+        league = league.upper()
+        return SailkapenakLogic.get_sailkapenak(league, year, team, category)
 
     @jwt_required()
     @api.expect(sailkapena_model, validate=True)
