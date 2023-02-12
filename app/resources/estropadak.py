@@ -1,11 +1,11 @@
 import logging
 import datetime
-import app.config
 
 from flask_restx import Namespace, Resource, fields
 from flask_jwt import jwt_required
 from ..dao.estropadak_dao import EstropadakDAO
 from .common.parsers import league_year_parser
+from ..config import LEAGUES 
 from .emaitzak import EmaitzakLogic
 from .urteak import YearsDAO
 
@@ -37,7 +37,7 @@ estropada_model = api.model('Estropada', {
     'izena': fields.String(required=True, min_length=4),
     'data': fields.DateTime(required=True),
     'lekua': fields.String(required=False),
-    'liga': fields.String(required=True, enum=app.config.LEAGUES),
+    'liga': fields.String(required=True, enum=LEAGUES),
     'sailkapena': fields.List(fields.Nested(emaitza_model)),
     'bi_jardunaldiko_bandera': fields.Boolean(default=False),
     'jardunaldia': fields.Integer(),
@@ -47,6 +47,11 @@ estropada_model = api.model('Estropada', {
     'puntuagarria': fields.Boolean(required=False, default=True),
     'kategoriak': fields.List(fields.String(), required=False),
     'oharrak': fields.String(required=False)
+})
+
+estropadak_list_model = api.model('Estropada listing model', {
+    'docs': fields.List(fields.Nested(estropada_model)),
+    'total': fields.Integer(example=1)
 })
 
 
@@ -133,18 +138,18 @@ class EstropadakLogic():
 
 @api.route('/', strict_slashes=False)
 class Estropadak(Resource):
-    @api.marshal_with(estropada_model, skip_none=True)
+    @api.marshal_with(estropadak_list_model, skip_none=True)
     @api.expect(league_year_parser, validate=True)
     def get(self):
         args = league_year_parser.parse_args()
         if not EstropadakLogic._validate_league_year(args.get('league'), args.get('year', 0)):
             return f"Year ({args.get('year')}) not found in league ({args.get('league')})", 400
-        estropadak = EstropadakDAO.get_estropadak_by_league_year(
+        estropadak_result = EstropadakDAO.get_estropadak_by_league_year(
             args['league'],
             args['year'],
             args['page'],
             args['count'])
-        return estropadak
+        return estropadak_result
 
     @jwt_required()
     @api.expect(estropada_model, validate=True)

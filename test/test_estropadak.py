@@ -85,68 +85,70 @@ def testActiveYear(estropadakApp):
     assert year == y or year == y-1
 
 
-def testEstropadakList(estropadakApp):
+def test_estropadak_list(estropadakApp):
     rv = estropadakApp.get('/estropadak?league=act&year=2010', )
     estropadak = json.loads(rv.data.decode('utf-8'))
-    assert len(estropadak) == 20
-    assert estropadak[0]['id'] == "2010-07-03_ACT_I-Bandera-SEAT---G.P.-Villa-de-Bilbao"
-    assert estropadak[0]["izena"] == "I Bandera SEAT - G.P. Villa de Bilbao"
-    assert estropadak[0]["data"] == "2010-07-03T17:00:00"
-    assert estropadak[0]["liga"] == "ACT"
-    assert estropadak[0]["urla"] == "http://www.euskolabelliga.com/resultados/ver.php?id=eu&r=1269258408"
-    assert estropadak[0]["lekua"] == "Bilbao Bizkaia"
-    assert estropadak[0]["kategoriak"] == []
+    assert 'docs' in estropadak
+    assert 'total' in estropadak
+    assert len(estropadak['docs']) == 20
+    assert estropadak['total'] == 20
+    assert estropadak['docs'][0]['id'] == "2010-07-03_ACT_I-Bandera-SEAT---G.P.-Villa-de-Bilbao"
+    assert estropadak['docs'][0]["izena"] == "I Bandera SEAT - G.P. Villa de Bilbao"
+    assert estropadak['docs'][0]["data"] == "2010-07-03T17:00:00"
+    assert estropadak['docs'][0]["liga"] == "ACT"
+    assert estropadak['docs'][0]["urla"] == "http://www.euskolabelliga.com/resultados/ver.php?id=eu&r=1269258408"
+    assert estropadak['docs'][0]["lekua"] == "Bilbao Bizkaia"
+    assert estropadak['docs'][0]["kategoriak"] == []
 
 
-def testEstropadakListWithoutResults(estropadakApp):
+def test_estropadak_list_without_results(estropadakApp):
     rv = estropadakApp.get('/estropadak?league=act&year=1900')
     assert rv.status_code == 400
 
 
-def testEstropadakListWithWrongLeague(estropadakApp):
+def test_estropadak_list_with_wrong_league(estropadakApp):
     rv = estropadakApp.get('/estropadak?league=actt&year=2010')
     assert rv.status_code == 400
 
 
-def testEstropadakListWithEuskotrenLeague(estropadakApp):
+def test_estropadak_list_with_Euskotren_league(estropadakApp):
     rv = estropadakApp.get('/estropadak?league=EUSKOTREN&year=2020')
     assert rv.status_code == 200
     estropadak = json.loads(rv.data.decode('utf-8'))
-    assert len(estropadak) == 14
+    assert estropadak['total'] == 14
 
 
-def testEstropadakWithoutParams(estropadakApp):
+def test_estropadak_without_params(estropadakApp):
     rv = estropadakApp.get('/estropadak')
     assert rv.status_code == 200
 
 
-def testEstropadakWithBadPaginationParams(estropadakApp):
+def test_estropadak_with_bad_pagination_params(estropadakApp):
     rv = estropadakApp.get('/estropadak?page=r')
     assert rv.status_code == 400
     rv = estropadakApp.get('/estropadak?count=r')
     assert rv.status_code == 400
 
 
-def testEstropadakWithDefaultPaginationParams(estropadakApp):
+def test_estropadak_with_default_pagination_params(estropadakApp):
     rv = estropadakApp.get('/estropadak')
     assert rv.status_code == 200
-    print(rv.get_json())
-    assert len(rv.get_json()) == 50
+    estropadak = rv.get_json()
+    assert len(estropadak['docs']) == 50
 
 
-def testEstropada(estropadakApp):
+def test_estropada(estropadakApp):
     rv = estropadakApp.get('/estropadak/1c79d46b8c74ad399d54fd7ee40005e3')
     estropada = json.loads(rv.data.decode('utf-8'))
     assert estropada['izena'] == 'III Bandera Euskadi Basque Country'
 
 
-def testEstropadaNotFound(estropadakApp):
+def test_estropada_not_found(estropadakApp):
     rv = estropadakApp.get('/estropadak/fuck')
-    # estropada = json.loads(rv.data.decode('utf-8'))
     assert rv.status_code == 404
 
 
-def testEstropadaCreationWithCredentials(estropadakApp, credentials):
+def test_estropada_creation_with_credentials(estropadakApp, credentials):
     rv = estropadakApp.post('/auth', json=credentials)
     token = rv.json['access_token']
     rv = estropadakApp.post('/estropadak', json={
@@ -159,7 +161,7 @@ def testEstropadaCreationWithCredentials(estropadakApp, credentials):
     assert rv.status_code == 201
 
 
-def testEstropadaCreationWithCredentialsEuskotrenLiga(estropadakApp, credentials):
+def test_estropada_creation_with_credentials_Euskotren_liga(estropadakApp, credentials):
     rv = estropadakApp.post('/auth', json=credentials)
     token = rv.json['access_token']
     rv = estropadakApp.post('/estropadak', json={
@@ -172,7 +174,7 @@ def testEstropadaCreationWithCredentialsEuskotrenLiga(estropadakApp, credentials
     assert rv.status_code == 201
 
 
-def testEstropadaCreationWithoutCredentials(estropadakApp, credentials, clean_up):
+def test_estropada_creation_without_credentials(estropadakApp, credentials, clean_up):
     rv = estropadakApp.post('/estropadak', json={
         "izena": "Estropada test",
         "data": "2021-06-01 17:00",
@@ -182,7 +184,7 @@ def testEstropadaCreationWithoutCredentials(estropadakApp, credentials, clean_up
     assert rv.status_code == 401
 
 
-def testEstropadaModificationWithoutCredentials(estropadakApp, credentials):
+def test_estropada_modification_without_credentials(estropadakApp, credentials):
     rv = estropadakApp.put('/estropadak/2021_act_estropada', json={
         "izena": "Estropada test",
         "data": "2021-06-01 17:00",
@@ -192,7 +194,7 @@ def testEstropadaModificationWithoutCredentials(estropadakApp, credentials):
     assert rv.status_code == 401
 
 
-def testEstropadaModificationWithCredentials(estropadakApp, credentials, clean_up):
+def test_estropada_modification_with_credentials(estropadakApp, credentials, clean_up):
     rv = estropadakApp.post('/auth', json=credentials)
     token = rv.json['access_token']
     rv = estropadakApp.post('/estropadak', json={
@@ -218,7 +220,7 @@ def testEstropadaModificationWithCredentials(estropadakApp, credentials, clean_u
     recovered_doc['sailkapena'] == []
 
 
-def testEstropadaDeletionWithoutCredentials(estropadakApp, credentials, clean_up):
+def test_estropada_deletion_without_credentials(estropadakApp, credentials, clean_up):
     rv = estropadakApp.post('/auth', json=credentials)
     token = rv.json['access_token']
     rv = estropadakApp.post('/estropadak', json={
@@ -232,7 +234,7 @@ def testEstropadaDeletionWithoutCredentials(estropadakApp, credentials, clean_up
     assert rv.status_code == 401
 
 
-def testEstropadaDeletionWithCredentials(estropadakApp, credentials):
+def test_estropada_deletion_with_credentials(estropadakApp, credentials):
     rv = estropadakApp.post('/auth', json=credentials)
     token = rv.json['access_token']
     rv = estropadakApp.post('/estropadak', json={
@@ -247,7 +249,7 @@ def testEstropadaDeletionWithCredentials(estropadakApp, credentials):
     assert rv.status_code == 200
 
 
-def testEstropadaCreationWithMissingDataInModel(estropadakApp, credentials):
+def test_estropada_creation_with_missing_data_in_model(estropadakApp, credentials):
     rv = estropadakApp.post('/auth', json=credentials)
     token = rv.json['access_token']
     rv = estropadakApp.post('/estropadak', json={
@@ -273,7 +275,7 @@ def testEstropadaCreationWithMissingDataInModel(estropadakApp, credentials):
     assert rv.status_code == 400
 
 
-def testEstropadaCreationWithUnsupportedLiga(estropadakApp, credentials):
+def test_estropada_creation_with_unsupported_liga(estropadakApp, credentials):
     rv = estropadakApp.post('/auth', json=credentials)
     token = rv.json['access_token']
     rv = estropadakApp.post('/estropadak', json={
@@ -285,7 +287,7 @@ def testEstropadaCreationWithUnsupportedLiga(estropadakApp, credentials):
     assert rv.status_code == 400
 
 
-def testEstropadaCreationWithSailkapena(estropadakApp, credentials):
+def test_estropada_creation_with_sailkapena(estropadakApp, credentials):
     rv = estropadakApp.post('/auth', json=credentials)
     token = rv.json['access_token']
     rv = estropadakApp.post('/estropadak', json={

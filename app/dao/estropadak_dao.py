@@ -1,7 +1,8 @@
 import logging
-import app.config
 
 from app.db_connection import get_db_connection
+from ..config import PAGE_SIZE
+from typing import Dict, List
 
 
 class EstropadakDAO:
@@ -22,7 +23,7 @@ class EstropadakDAO:
             return estropada
 
     @staticmethod
-    def get_estropadak_by_league_year(league, year, page=0, count=app.config.PAGE_SIZE):
+    def get_estropadak_by_league_year(league, year, page=0, count=PAGE_SIZE) -> Dict[str, List[Dict]]:
         logging.info("League:%s and year: %s", league, year)
         start = []
         end = []
@@ -43,22 +44,34 @@ class EstropadakDAO:
 
         with get_db_connection() as database:
             try:
-                estropadak = database.get_view_result("estropadak", "all",
-                                                      raw_result=True,
-                                                      startkey=start,
-                                                      endkey=end,
-                                                      include_docs=True,
-                                                      reduce=False,
-                                                      skip=count*page,
-                                                      limit=count)
-                result = []
-                for row in estropadak['rows']:
-                    estropada = row['doc']
-                    estropada['data'] = estropada['data'].replace(' ', 'T')
-                    if estropada['liga'] == 'euskotren':
-                        estropada['liga'] = estropada['liga'].upper()
-                    result.append(estropada)
-                return result
+                res = database.get_view_result("estropadak", "all",
+                                               startkey=start,
+                                               endkey=end,
+                                               raw_result=True,
+                                               reduce=True)
+                doc_count = res.get('rows', [{'value': 0}])[0]['value']
+                if doc_count > 0:
+                    estropadak = database.get_view_result("estropadak",
+                                                          "all",
+                                                          raw_result=True,
+                                                          startkey=start,
+                                                          endkey=end,
+                                                          include_docs=True,
+                                                          reduce=False,
+                                                          skip=count * page,
+                                                          limit=count)
+                    result = []
+                    for row in estropadak['rows']:
+                        estropada = row['doc']
+                        estropada['data'] = estropada['data'].replace(' ', 'T')
+                        if estropada['liga'] == 'euskotren':
+                            estropada['liga'] = estropada['liga'].upper()
+                        result.append(estropada)
+
+                return {
+                    'total': doc_count,
+                    'docs': result
+                }
             except KeyError:
                 return {'error': 'Estropadak not found'}, 404
 
