@@ -1,7 +1,7 @@
 import logging
 import datetime
 
-from flask_restx import Namespace, Resource, fields
+from flask_restx import Namespace, Resource, fields, abort
 from flask_jwt import jwt_required
 from ..dao.estropadak_dao import EstropadakDAO
 from .common.parsers import league_year_parser
@@ -138,12 +138,14 @@ class EstropadakLogic():
 
 @api.route('/', strict_slashes=False)
 class Estropadak(Resource):
-    @api.marshal_with(estropadak_list_model, skip_none=True)
     @api.expect(league_year_parser, validate=True)
+    @api.response(400, 'Validation error')
+    @api.marshal_with(estropadak_list_model, skip_none=True, code=200, description='Success')
     def get(self):
         args = league_year_parser.parse_args()
         if not EstropadakLogic._validate_league_year(args.get('league'), args.get('year', 0)):
-            return f"Year ({args.get('year')}) not found in league ({args.get('league')})", 400
+            logging.info('Not found year')
+            abort(message=f"Year ({args.get('year')}) not found in league ({args.get('league')})", code=400)
         estropadak_result = EstropadakDAO.get_estropadak_by_league_year(
             args['league'],
             args['year'],
