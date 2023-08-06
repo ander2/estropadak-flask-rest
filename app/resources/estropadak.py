@@ -137,13 +137,11 @@ class Estropadak(Resource):
     @api.expect(league_year_parser, validate=True)
     def get(self):
         args = league_year_parser.parse_args()
-        if not EstropadakLogic._validate_league_year(args.get('league'), args.get('year', 0)):
-            return f"Year ({args.get('year')}) not found in league ({args.get('league')})", 400
-        estropadak = EstropadakDAO.get_estropadak_by_league_year(
-            args['league'],
-            args['year'],
-            args['page'],
-            args['count'])
+        estropadak = EstropadakDAO.get_estropadak(
+            league=args['league'],
+            year=args['year'],
+            page=args['page'],
+            count=args['count'])
         return estropadak
 
     @jwt_required()

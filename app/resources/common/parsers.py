@@ -2,10 +2,10 @@ from ...config import LEAGUES, PAGE_SIZE
 from flask_restx import reqparse
 
 league_year_parser = reqparse.RequestParser()
-league_year_parser.add_argument('league', type=str, choices=LEAGUES, case_sensitive=False)
-league_year_parser.add_argument('year', type=int)
-league_year_parser.add_argument('page', type=int, help="Page number", default=0)
-league_year_parser.add_argument('count', type=int, help="Elements per page", default=PAGE_SIZE)
+league_year_parser.add_argument('league', type=str, choices=LEAGUES, case_sensitive=False, required=False)
+league_year_parser.add_argument('year', type=int, required=False)
+league_year_parser.add_argument('page', type=int, help="Page number", default=0, required=False)
+league_year_parser.add_argument('count', type=int, help="Elements per page", default=PAGE_SIZE, required=False)
 
 required_league_year_parser = reqparse.RequestParser()
 required_league_year_parser.add_argument('league',
