@@ -23,7 +23,9 @@ rank_model = api.model('Team Rank', {
     'points': fields.Float(description="Team points in league ranking", required=False, default=0),
     'position': fields.Integer(description="Team position in league ranking", required=False, default=0),
     'positions': fields.List(fields.Integer, description="List will all positions", required=False, default=[]),
-    'cumulative': fields.List(fields.Float, description="List will cumulative points thought league", required=False, default=[]),
+    'cumulative': fields.List(
+        fields.Float, description="List will cumulative points thought league", required=False, default=[]
+    ),
     'rowers': fields.Nested(rower_model),
     'age': fields.Nested(age_model),
 })
@@ -63,7 +65,7 @@ class SailkapenakLogic():
         return res
 
     @staticmethod
-    def get_sailkapenak(league: str, year:int, teams: List[str], category):
+    def get_sailkapenak(league: str, year: int, teams: List[str], category):
         stats = None
         if year is None:
             stats = SailkapenakDAO.get_sailkapena_by_league(league)
@@ -150,7 +152,7 @@ class Sailkapenak(Resource):
                 return {}, 201
             else:
                 return {}, 400
-        except Exception as e:
+        except Exception:
             logging.info("Error", exc_info=1)
             return {'message': "Cannot create sailkapena"}, 400
 
@@ -173,7 +175,7 @@ class Sailkapena(Resource):
         try:
             stats = SailkapenakLogic.update_sailkapena(sailkapena_id, data)
             return stats
-        except Exception as e:
+        except Exception:
             logging.info("Error", exc_info=1)
             return "Cannot update sailkapena", 400
 
