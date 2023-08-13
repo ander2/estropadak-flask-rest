@@ -21,3 +21,8 @@ estatistikak_parser.add_argument('year', type=int)
 estatistikak_parser.add_argument('team', type=str)
 estatistikak_parser.add_argument('category', type=str)
 estatistikak_parser.add_argument('stat', type=str, default='cumulative')
+
+emaitzak_parser = reqparse.RequestParser()
+emaitzak_parser.add_argument('criteria', type=str, case_sensitive=True, required=True, help="Search criteria")
+emaitzak_parser.add_argument('page', type=int, help="Page number", default=0)
+emaitzak_parser.add_argument('count', type=int, help="Elements per page", default=PAGE_SIZE)

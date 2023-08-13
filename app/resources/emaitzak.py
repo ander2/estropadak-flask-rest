@@ -7,6 +7,7 @@ from flask_jwt import jwt_required
 from app.config import LEAGUES, PAGE_SIZE
 from ..dao.emaitzak_dao import EmaitzakDAO
 from .taldeak import TaldeakDAO
+from .common.parsers import emaitzak_parser
 
 
 api = Namespace('emaitzak', description='')
@@ -62,13 +63,10 @@ class EmaitzakLogic:
 
 @api.route('/', strict_slashes=False)
 class Emaitzak(Resource):
+    @api.expect(emaitzak_parser, validate=True)
     @api.marshal_with(emaitzak_list_model)
     def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('criteria', type=str, help="Search criteria")
-        parser.add_argument('page', type=int, help="Page number", default=0)
-        parser.add_argument('count', type=int, help="Elements per page", default=PAGE_SIZE)
-        args = parser.parse_args()
+        args = emaitzak_parser.parse_args()
         try:
             criteria = json.loads(args['criteria'])
         except JSONDecodeError:
