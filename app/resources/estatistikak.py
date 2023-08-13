@@ -77,11 +77,16 @@ class EstatistikakLogic():
                     "color": get_team_color(taldea),
                 }
                 if not category:
+                    points = [stats['cumulative'][0]]
+                    index = 0
+                    for point in stats['cumulative'][1:]:
+                        points.append(point-stats['cumulative'][index])
+                        index += 1
                     values = [{
                         "label": val[1]['izena'],
                         "x": i,
-                        "value": points_max - val[0] + 1}
-                        for i, val in enumerate(zip(stats['positions'], estropadak))]
+                        "value": val[0]}
+                        for i, val in enumerate(zip(points, estropadak))]
                 else:
                     points_max = stats['points'] + stats.get('discard', 0)
                     points = []

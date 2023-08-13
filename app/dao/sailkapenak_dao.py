@@ -10,8 +10,6 @@ class SailkapenakDAO:
             if league in ['gbl', 'bbl', 'btl', 'gtl']:
                 _category = category.replace(' ', '_').lower()
                 key = 'rank_{}_{}_{}'.format(league.upper(), year, _category)
-            elif league == 'EUSKOTREN':
-                key = 'rank_{}_{}'.format(league.lower(), year)
             else:
                 key = 'rank_{}_{}'.format(league.upper(), year)
             try:
@@ -26,10 +24,8 @@ class SailkapenakDAO:
 
     @staticmethod
     def get_sailkapena_by_league(league):
-        key = 'rank_{}'.format(league.upper())
         league = league.upper()
-        if league.lower() == 'euskotren':
-            league = league.lower()
+        key = 'rank_{}'.format(league)
         endkey = "{}z".format(key)
 
         start = key
