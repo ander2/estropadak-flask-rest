@@ -2,6 +2,8 @@
 *.pyc
 .vscode
 .cache
+.coverage
+.DS_Store
 __pycache__
 vevn/
 venv/
