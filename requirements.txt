@@ -31,7 +31,7 @@ pluggy==0.13.1
 py==1.10.0
 pycodestyle==2.6.0
 pyflakes==2.2.0
-PyJWT==1.4.2
+PyJWT==2.4.0
 pylint==2.6.0
 pyparsing==2.4.7
 pyrsistent==0.16.0
