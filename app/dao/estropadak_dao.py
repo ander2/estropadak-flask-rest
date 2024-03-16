@@ -49,7 +49,12 @@ class EstropadakDAO:
                                                endkey=end,
                                                raw_result=True,
                                                reduce=True)
-                doc_count = res.get('rows', [{'value': 0}])[0]['value']
+                rows = res.get('rows', [{'value': 0}])
+                if len(rows) > 1: 
+                    doc_count = rows[0]['value']
+                else:
+                    doc_count = 0
+                    result = []
                 if doc_count > 0:
                     estropadak = database.get_view_result("estropadak",
                                                           "all",
