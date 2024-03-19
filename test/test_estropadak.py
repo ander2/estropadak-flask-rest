@@ -103,7 +103,9 @@ def test_estropadak_list(estropadakApp):
 
 def test_estropadak_list_without_results(estropadakApp):
     rv = estropadakApp.get('/estropadak?league=act&year=1900')
-    assert rv.status_code == 400
+    assert rv.status_code == 200
+    estropadak = json.loads(rv.data.decode('utf-8'))
+    assert estropadak['total'] == 0
 
 
 def test_estropadak_list_with_wrong_league(estropadakApp):

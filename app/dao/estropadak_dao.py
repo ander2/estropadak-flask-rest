@@ -50,7 +50,7 @@ class EstropadakDAO:
                                                raw_result=True,
                                                reduce=True)
                 rows = res.get('rows', [{'value': 0}])
-                if len(rows) > 1: 
+                if len(rows) > 0: 
                     doc_count = rows[0]['value']
                 else:
                     doc_count = 0
