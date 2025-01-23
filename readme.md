@@ -1,3 +1,11 @@
+# 2025-01-23 Update
+
+Proiektu honek ez du jarraipenik izango. 
+[estropadak-fastapi](https://github.com/ander2/estropadak-fastapi) proiektuak ordezkatuko du hau.
+
+This project will not be longer maintained. 
+Check [estropadak-fastapi](https://github.com/ander2/estropadak-fastapi) for replacement. 
+
 # Introduction / Sarrera
 
 `flask-restx` implementation of estropadak REST API
